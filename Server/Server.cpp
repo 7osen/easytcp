@@ -4,8 +4,26 @@
 #include <Windows.h>
 #include <WinSock2.h>
 #include <stdio.h>
+#include <vector>
 
 #pragma comment(lib, "ws2_32.lib")
+std::vector<SOCKET> c_Sock;
+int myaccept(SOCKET _cSock)
+{
+
+	char msgBuf[] = "Hello , I'm server";
+	send(_cSock, msgBuf, strlen(msgBuf) + 1, 0);
+	char recvBuf[256] = {};
+	int nlen = recv(_cSock, recvBuf, 256, 0);
+	if (nlen > 0)
+	{
+		char msgBuf1[] = "127.0.0.1";
+		printf("receive message: %s\n", recvBuf);
+		send(_cSock, msgBuf1, strlen(msgBuf1) + 1, 0);
+		return 0;
+	}
+	else return -1;
+}
 int main()
 {
 	//windows socket 2.x »·¾³
@@ -40,27 +58,55 @@ int main()
 	}
 	while (true)
 	{
-		sockaddr_in clientAddr = {};
-		int nAddrLen = sizeof(sockaddr_in);
-		SOCKET _cSock = INVALID_SOCKET;
-		_cSock = accept(_sock, (sockaddr*)& clientAddr, &nAddrLen);
-		if (INVALID_SOCKET == _cSock)
+		fd_set fRead;
+		fd_set fWrite;
+		fd_set fExp;
+
+		FD_ZERO(&fRead);
+		FD_ZERO(&fWrite);
+		FD_ZERO(&fExp);
+
+		FD_SET(_sock, &fRead);
+		FD_SET(_sock, &fWrite);
+		FD_SET(_sock, &fExp);
+		for (auto _csock : c_Sock)
 		{
-			printf("client connect error!\n");
+			FD_SET(_csock, &fRead);
 		}
-		else
+		int ret = select(_sock + 1, &fRead, &fWrite, &fExp, NULL);
+		if (ret < 0)
 		{
-			printf("new client connect : IP = %s \n", inet_ntoa(clientAddr.sin_addr));
+			printf("select end...\n");
+			break;
 		}
-		char msgBuf[] = "Hello , I'm server";
-		send(_cSock, msgBuf, strlen(msgBuf) + 1, 0);
-		char recvBuf[256] = {};
-		int nlen = recv(_cSock, recvBuf, 256, 0);
-		if (nlen > 0)
+		if (FD_ISSET(_sock, &fRead))
 		{
-			char msgBuf1[] = "127.0.0.1";
-			printf("receive message: %s\n", recvBuf);
-			send(_cSock, msgBuf1, strlen(msgBuf1) + 1, 0);
+			FD_CLR(_sock, &fRead);
+			sockaddr_in clientAddr = {};
+			int nAddrLen = sizeof(sockaddr_in);
+			SOCKET _cSock = INVALID_SOCKET;
+			_cSock = accept(_sock, (sockaddr*)& clientAddr, &nAddrLen);
+			if (INVALID_SOCKET == _cSock)
+			{
+				printf("client connect error!\n");
+			}
+			else
+			{
+				printf("new client connect : Socket = %d, IP = %s ...\n", (int)_cSock, inet_ntoa(clientAddr.sin_addr));
+				c_Sock.push_back(_cSock);
+			}
+		}
+		for (int i = 0; i < fRead.fd_count; i++)
+		{
+			if (-1 == myaccept(fRead.fd_array[i]))
+			{
+				printf("client exit : Socket = %d ...\n", (int)fRead.fd_array[i]);
+				auto iter = std::find(c_Sock.begin(), c_Sock.end(), fRead.fd_array[i]);
+				if (iter != c_Sock.end())
+				{
+					c_Sock.erase(iter);
+				}
+			}
 		}
 
 	}
