@@ -46,15 +46,18 @@ int main()
 			printf("client close\n");
 			break;
 		}
-		else if (0 == strcmp(msgBuf, "getIP"))
+		else 
 		{
-			printf("%s\n", msgBuf);
 			send(_sock, msgBuf, strlen(msgBuf) + 1, 0);
 			char recvmsg[256] = {};
 			int nlen = recv(_sock, recvmsg, 256, 0);
 			if (nlen > 0)
 			{
 				printf("receive message: %s\n", recvmsg);
+			}
+			else
+			{
+				printf("send message error\n");
 			}
 		}
 	}

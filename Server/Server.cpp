@@ -10,15 +10,12 @@
 std::vector<SOCKET> c_Sock;
 int myaccept(SOCKET _cSock)
 {
-
-	char msgBuf[] = "Hello , I'm server";
-	send(_cSock, msgBuf, strlen(msgBuf) + 1, 0);
 	char recvBuf[256] = {};
 	int nlen = recv(_cSock, recvBuf, 256, 0);
 	if (nlen > 0)
 	{
-		char msgBuf1[] = "127.0.0.1";
-		printf("receive message: %s\n", recvBuf);
+		char msgBuf1[] = "send message success!";
+		printf("receive message from client <IP = %d>: %s\n",_cSock, recvBuf);
 		send(_cSock, msgBuf1, strlen(msgBuf1) + 1, 0);
 		return 0;
 	}
