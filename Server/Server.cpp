@@ -16,7 +16,7 @@ int myaccept(SOCKET _cSock)
 	if (nlen > 0)
 	{
 		char msgBuf1[] = "send message success!";
-		printf("receive message from client <IP = %d>: %s\n",_cSock, recvBuf);
+		printf("receive message from client <SOCKET = %d>: %s\n",_cSock, recvBuf);
 		send(_cSock, msgBuf1, strlen(msgBuf1) + 1, 0);
 		return 0;
 	}
