@@ -8,6 +8,7 @@
 
 #pragma comment(lib, "ws2_32.lib")
 std::vector<SOCKET> c_Sock;
+
 int myaccept(SOCKET _cSock)
 {
 	char recvBuf[256] = {};
@@ -89,6 +90,7 @@ int main()
 			}
 			else
 			{
+				
 				printf("new client connect : Socket = %d, IP = %s ...\n", (int)_cSock, inet_ntoa(clientAddr.sin_addr));
 				c_Sock.push_back(_cSock);
 			}

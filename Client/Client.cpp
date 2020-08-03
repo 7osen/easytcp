@@ -5,8 +5,38 @@
 #include <Windows.h>
 #include <WinSock2.h>
 #include <stdio.h>
+#include <thread>
 
 #pragma comment(lib, "ws2_32.lib")
+bool _TRun = true;
+void cmdThread(SOCKET _sock)
+{
+	while (true)
+	{
+		char msgBuf[256] = {};
+		scanf("%s", msgBuf);
+		if (0 == strcmp(msgBuf, "exit"))
+		{
+			printf("client close\n");
+			_TRun = false;
+			return;
+		}
+		else
+		{
+			send(_sock, msgBuf, strlen(msgBuf) + 1, 0);
+			char recvmsg[256] = {};
+			int nlen = recv(_sock, recvmsg, 256, 0);
+			if (nlen > 0)
+			{
+				printf("receive message: %s\n", recvmsg);
+			}
+			else
+			{
+				printf("send message error\n");
+			}
+		}
+	}
+}
 int main()
 {
 	//windows socket 2.x »·¾³
@@ -37,29 +67,11 @@ int main()
 	{
 		printf("connect success!\n");
 	}
-	while (true)
+	std::thread cmdt (cmdThread, _sock);
+	cmdt.detach();
+	while (_TRun)
 	{
-		char msgBuf[256] = {};
-		scanf("%s", msgBuf);
-		if (0 == strcmp(msgBuf, "exit"))
-		{
-			printf("client close\n");
-			break;
-		}
-		else 
-		{
-			send(_sock, msgBuf, strlen(msgBuf) + 1, 0);
-			char recvmsg[256] = {};
-			int nlen = recv(_sock, recvmsg, 256, 0);
-			if (nlen > 0)
-			{
-				printf("receive message: %s\n", recvmsg);
-			}
-			else
-			{
-				printf("send message error\n");
-			}
-		}
+		
 	}
 	closesocket(_sock);
 	WSACleanup();
