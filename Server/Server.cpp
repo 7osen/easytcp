@@ -110,7 +110,6 @@ int main()
 			}
 			else
 			{
-
 				printf("new client connect : Socket = %d, IP = %s ...\n", (int)_cSock, inet_ntoa(clientAddr.sin_addr));
 				c_Sock.push_back(_cSock);
 			}
