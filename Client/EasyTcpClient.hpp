@@ -69,7 +69,7 @@ public:
 		}
 		else
 		{
-			printf("connect success!\n");
+			printf("connect success! IP = %s ... \n", inet_ntoa(_sin.sin_addr));
 		}
 		return retc;
 	}

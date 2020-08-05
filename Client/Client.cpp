@@ -27,7 +27,7 @@ int main()
 {
 	EasyTcpClient etc = EasyTcpClient();
 	etc.init();
-	etc.Connect((char*)"127.0.0.1", 3456);
+	etc.Connect((char*)"192.168.1.3", 3456);
 	std::thread cmdt(cmdThread, &etc);
 	cmdt.detach();
 	while (etc.isRun())

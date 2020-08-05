@@ -140,6 +140,9 @@
   <ItemGroup>
     <ClCompile Include="Server.cpp" />
   </ItemGroup>
+  <ItemGroup>
+    <ClInclude Include="EasyTcpServer.hpp" />
+  </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">
   </ImportGroup>
