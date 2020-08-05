@@ -17,22 +17,28 @@
 
 #include <stdio.h>
 #include <vector>
-
+#include "Message.hpp"
 #pragma comment(lib, "ws2_32.lib")
 
 class EasyTcpServer
 {
 	SOCKET _sock = INVALID_SOCKET;
 	std::vector<SOCKET> c_Sock;
+	int _Lastpos = 0;
+#define MsgBufSize 40960
+	char _MsgBuf[MsgBufSize] = {};//second
+	char MsgBuf[MsgBufSize] = {};//first
 public:
 	EasyTcpServer()
 	{
 
 	}
+
 	~EasyTcpServer()
 	{
 
 	}
+
 	void init()
 	{
 		//windows socket 2.x 环境
@@ -54,6 +60,7 @@ public:
 		}
 		
 	}
+
 	//Bind绑定端口
 	void Bind(const char * ip,int port)
 	{
@@ -88,6 +95,7 @@ public:
 			printf("bind success! ip = %s ...\n",inet_ntoa(_sin.sin_addr));
 		}
 	}
+
 	//listen 监听端口
 	void Listen()
 	{
@@ -101,6 +109,7 @@ public:
 			printf("listen success!\n");
 		}
 	}
+
 	void Run()
 	{
 
@@ -178,23 +187,62 @@ public:
 #endif
 		}
 	}
+
 	bool isRun()
 	{
 		return _sock != INVALID_SOCKET;
 	}
-	int Accept(SOCKET _cSock)
+
+	int Accept(SOCKET cSock)
 	{
 		char recvBuf[256] = {};
-		int nlen = recv(_cSock, recvBuf, 256, 0);
+		int nlen = Recieve(cSock,recvBuf);
 		if (nlen > 0)
 		{
+			if (!strcmp(recvBuf, "")) return 0;
 			char msgBuf1[] = "send message success!";
-			printf("receive message from client <SOCKET = %d>: %s\n", _cSock, recvBuf);
-			send(_cSock, msgBuf1, strlen(msgBuf1) + 1, 0);
+			printf("receive message from client <SOCKET = %d>: %s\n", cSock, recvBuf);
+			Send(cSock, msgBuf1);
 			return 0;
 		}
 		else return -1;
 	}
+
+	int Recieve(SOCKET cSock,char* recvmsg)
+	{
+		int nlen = recv(cSock, MsgBuf, MsgBufSize, 0);
+		if (nlen > 0)
+		{
+			memcpy(_MsgBuf + _Lastpos, MsgBuf, nlen);
+			_Lastpos += nlen;
+			while (_Lastpos >= sizeof(DataHeader))
+			{
+				DataHeader* header = (DataHeader*)_MsgBuf;
+				if (_Lastpos >= header->HeaderLength)
+				{
+					memcpy(recvmsg, _MsgBuf + sizeof(DataHeader), header->DataLength);
+					int leftnum = _Lastpos - header->HeaderLength;
+					memcpy(_MsgBuf, _MsgBuf + header->HeaderLength, leftnum);
+					_Lastpos = leftnum;
+				}
+				else break;
+			}
+			return nlen;
+		}
+		else
+		{
+			return -1;
+		}
+		return nlen;
+	}
+
+	void Send(SOCKET cSock,char* msg)
+	{
+		DataHeader header = DataHeader(strlen(msg) + 1);
+		send(cSock, (char*)&header, sizeof(header), 0);
+		send(cSock, msg, strlen(msg)+1, 0);
+	}
+
 	void Close()
 	{
 		if (_sock != INVALID_SOCKET)
@@ -208,6 +256,7 @@ public:
 		}
 		_sock = INVALID_SOCKET;
 	}
+
 private:
 
 };

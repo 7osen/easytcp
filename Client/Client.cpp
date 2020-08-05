@@ -13,26 +13,20 @@ void cmdThread(EasyTcpClient* etc)
 		}
 		else
 		{
-			etc->sendMessage(msgBuf);
-			char recvmsg[256] = {};
-			int nlen = etc->recieve(msgBuf, 256, 0);
-			if (nlen <= 0)
-			{
-				printf("send message error\n");
-			}
+			etc->SendMessage(msgBuf);
 		}
 	}
 }
 int main()
 {
 	EasyTcpClient etc = EasyTcpClient();
-	etc.init();
-	etc.Connect((char*)"192.168.1.3", 3456);
+	etc.Init();
+	etc.Connect((char*)"192.168.1.4", 3456);
 	std::thread cmdt(cmdThread, &etc);
 	cmdt.detach();
 	while (etc.isRun())
 	{
-
+		etc.Run();
 	}
 	etc.Close();
 };

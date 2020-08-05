@@ -20,7 +20,7 @@ int main()
 {
 	EasyTcpServer ets = EasyTcpServer();
 	ets.init();
-	ets.Bind("192.168.1.3", 3456);
+	ets.Bind(nullptr, 3456);
 	ets.Listen();
 	std::thread cmdt(cmdThread, &ets);
 	cmdt.detach();

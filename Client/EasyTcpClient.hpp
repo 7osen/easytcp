@@ -17,20 +17,27 @@
 
 #include <stdio.h>
 #include <thread>
+#include "Message.hpp"
 
 #pragma comment(lib, "ws2_32.lib")
 class EasyTcpClient
 {
 	SOCKET _sock = INVALID_SOCKET;
+	int _Lastpos = 0;
+	static const int MsgBufSize = 409600;
+	char _MsgBuf[MsgBufSize] = "";//second
+	char MsgBuf[MsgBufSize] = "";//first
 public:
 	EasyTcpClient()
 	{
 	}
+
 	virtual ~EasyTcpClient()
 	{
 		Close();
 	}
-	void init()
+
+	void Init()
 	{
 		//windows socket 2.x »·¾³
 #ifdef _WIN32
@@ -50,9 +57,10 @@ public:
 			printf("build socket success!\n");
 		}
 	}
+
 	int Connect(char* IP, int port)
 	{
-		if (_sock == INVALID_SOCKET) init();
+		if (_sock == INVALID_SOCKET) Init();
 		sockaddr_in _sin = {};
 		_sin.sin_family = AF_INET;
 		_sin.sin_port = htons(port);
@@ -73,11 +81,12 @@ public:
 		}
 		return retc;
 	}
+
 	void Close()
 	{
 		if (_sock != INVALID_SOCKET)
 		{
-
+			printf("Client Close...\n");
 #ifdef _WIN32
 			closesocket(_sock);
 			WSACleanup();
@@ -94,18 +103,79 @@ public:
 	 //cmdt.detach();
 		return _sock != INVALID_SOCKET;
 	}
-	int recieve(char *recvmsg, int len,int flag)
+
+	int Recieve(char* recvmsg)
 	{
-		int nlen = recv(_sock, recvmsg, len, flag);
+		int nlen = recv(_sock, MsgBuf, MsgBufSize, 0);
 		if (nlen > 0)
 		{
-			printf("receive message: %s\n", recvmsg);
+			memcpy(_MsgBuf + _Lastpos, MsgBuf, nlen);
+			_Lastpos += nlen;
+			while (_Lastpos >= sizeof(DataHeader))
+			{
+				DataHeader* header = (DataHeader*)_MsgBuf;
+				if (_Lastpos >= header->HeaderLength)
+				{
+					memcpy(recvmsg, _MsgBuf + sizeof(DataHeader), header->DataLength);
+					int leftnum = _Lastpos - header->HeaderLength;
+					memcpy(_MsgBuf, _MsgBuf + header->HeaderLength, leftnum);
+					_Lastpos = leftnum;
+				}
+				else break;
+			}
+			return nlen;
+		}
+		else
+		{
+			return -1;
 		}
 		return nlen;
 	}
-	void sendMessage(char * msgBuf)
+
+	void SendMessage(char * msg)
 	{
-		send(_sock, msgBuf, strlen(msgBuf) + 1, 0);
+		DataHeader header = DataHeader(strlen(msg)+1);
+		int res = send(_sock, (char*)& header, sizeof(DataHeader), 0);
+		res =send(_sock, msg, strlen(msg) + 1, 0);
+	}
+
+	void Run()
+	{
+
+		if (INVALID_SOCKET == _sock) Init();
+		while (isRun())
+		{
+			fd_set fRead;
+			fd_set fWrite;
+			fd_set fExp;
+
+			FD_ZERO(&fRead);
+			FD_ZERO(&fWrite);
+			FD_ZERO(&fExp);
+
+			FD_SET(_sock, &fRead);
+			FD_SET(_sock, &fWrite);
+			FD_SET(_sock, &fExp);
+			int ret = select(_sock + 1, &fRead, &fWrite, &fExp, NULL);
+			if (ret < 0)
+			{
+				printf("select end...\n");
+				break;
+			}
+			if (FD_ISSET(_sock, &fRead))
+			{
+				char recvBuf[256] = "";
+				if (-1 == Recieve(recvBuf))
+				{
+					printf("connect break...");
+					Close();
+				}
+				else if (strcmp(recvBuf, ""))
+				{
+					printf("%s \n", recvBuf);
+				}
+			}
+		}
 	}
 private:
 	
