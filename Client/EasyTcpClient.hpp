@@ -143,7 +143,7 @@ public:
 	{
 
 		if (INVALID_SOCKET == _sock) Init();
-		while (isRun())
+		
 		{
 			fd_set fRead;
 			fd_set fWrite;
@@ -160,7 +160,6 @@ public:
 			if (ret < 0)
 			{
 				printf("select end...\n");
-				break;
 			}
 			if (FD_ISSET(_sock, &fRead))
 			{

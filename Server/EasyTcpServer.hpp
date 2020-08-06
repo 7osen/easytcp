@@ -4,6 +4,7 @@
 #define _WINSOCK_DEPRECATED_NO_WARNINGS
 
 #ifdef _WIN32
+    #define FD_SETSIZE 1024
 	#include <Windows.h>
 	#include <WinSock2.h>
 #else

@@ -19,6 +19,14 @@ void cmdThread(EasyTcpClient* etc)
 }
 int main()
 {
+	EasyTcpClient* csock[1000];
+	for (int i = 0; i < 1000; i++)
+	{
+		csock[i] = new EasyTcpClient();
+		csock[i]->Init();
+		csock[i]->Connect((char*)"192.168.1.4", 3456);
+		csock[i]->SendMessage((char*)"hello");
+	}
 	EasyTcpClient etc = EasyTcpClient();
 	etc.Init();
 	etc.Connect((char*)"192.168.1.4", 3456);
