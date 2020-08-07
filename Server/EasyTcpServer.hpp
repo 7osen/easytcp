@@ -4,27 +4,31 @@
 #define _WINSOCK_DEPRECATED_NO_WARNINGS
 
 #ifdef _WIN32
-    #define FD_SETSIZE 1024
-	#include <Windows.h>
-	#include <WinSock2.h>
+#define FD_SETSIZE 1024
+#include <Windows.h>
+#include <WinSock2.h>
 #else
-	#include <unistd.h>
-	#include <arpa/inet.h>
-	#include <string.h>
-	#define SOCKET int
-	#define INVALID_SOCKET  (SOCKET)(~0)
-	#define SOCKET_ERROR            (-1)
+#include <unistd.h>
+#include <arpa/inet.h>
+#include <string.h>
+#define SOCKET int
+#define INVALID_SOCKET  (SOCKET)(~0)
+#define SOCKET_ERROR            (-1)
 #endif
 
 #include <stdio.h>
 #include <vector>
 #include "Message.hpp"
+#include "TimeCount.hpp"
+
 #pragma comment(lib, "ws2_32.lib")
 
 class EasyTcpServer
 {
+	TimeCount _timeC;
 	SOCKET _sock = INVALID_SOCKET;
 	std::vector<SOCKET> c_Sock;
+	int _recvCount = 0;
 	int _Lastpos = 0;
 #define MsgBufSize 40960
 	char _MsgBuf[MsgBufSize] = {};//second
@@ -59,11 +63,11 @@ public:
 		{
 			printf("build socket success...\n");
 		}
-		
+		_timeC = TimeCount();
 	}
 
 	//Bind°ó¶¨¶Ë¿Ú
-	void Bind(const char * ip,int port)
+	void Bind(const char* ip, int port)
 	{
 		if (INVALID_SOCKET == _sock) init();
 		sockaddr_in _sin = {};
@@ -93,7 +97,7 @@ public:
 		}
 		else
 		{
-			printf("bind success! ip = %s ...\n",inet_ntoa(_sin.sin_addr));
+			printf("bind success! ip = %s ...\n", inet_ntoa(_sin.sin_addr));
 		}
 	}
 
@@ -197,23 +201,31 @@ public:
 	int Accept(SOCKET cSock)
 	{
 		char recvBuf[256] = {};
-		int nlen = Recieve(cSock,recvBuf);
+		int nlen = Recieve(cSock, recvBuf);
 		if (nlen > 0)
 		{
 			if (!strcmp(recvBuf, "")) return 0;
-			char msgBuf1[] = "send message success!";
-			printf("receive message from client <SOCKET = %d>: %s\n", cSock, recvBuf);
-			Send(cSock, msgBuf1);
+			// char msgBuf1[] = "send message success!";
+			// printf("receive message from client <SOCKET = %d>: %s\n", cSock, recvBuf);
+			// Send(cSock, msgBuf1);
 			return 0;
 		}
 		else return -1;
 	}
 
-	int Recieve(SOCKET cSock,char* recvmsg)
+	int Recieve(SOCKET cSock, char* recvmsg)
 	{
 		int nlen = recv(cSock, MsgBuf, MsgBufSize, 0);
 		if (nlen > 0)
 		{
+			_recvCount++;
+			double t = _timeC.getSecond();
+			if (t >= 1.0)
+			{
+				printf("time <%lf>, <SOCKET = %d>, Client = <%d>, recieve  = <%d> message ...\n", t, _sock, c_Sock.size(), _recvCount);
+				_recvCount = 0;
+				_timeC.Update();
+			}
 			memcpy(_MsgBuf + _Lastpos, MsgBuf, nlen);
 			_Lastpos += nlen;
 			while (_Lastpos >= sizeof(DataHeader))
@@ -237,11 +249,11 @@ public:
 		return nlen;
 	}
 
-	void Send(SOCKET cSock,char* msg)
+	void Send(SOCKET cSock, char* msg)
 	{
 		DataHeader header = DataHeader(strlen(msg) + 1);
-		send(cSock, (char*)&header, sizeof(header), 0);
-		send(cSock, msg, strlen(msg)+1, 0);
+		send(cSock, (char*)& header, sizeof(header), 0);
+		send(cSock, msg, strlen(msg) + 1, 0);
 	}
 
 	void Close()

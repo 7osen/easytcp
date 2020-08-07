@@ -26,5 +26,8 @@
     <ClInclude Include="Message.hpp">
       <Filter>头文件</Filter>
     </ClInclude>
+    <ClInclude Include="TimeCount.hpp">
+      <Filter>头文件</Filter>
+    </ClInclude>
   </ItemGroup>
 </Project>

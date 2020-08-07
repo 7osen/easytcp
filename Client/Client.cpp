@@ -25,16 +25,11 @@ int main()
 		csock[i] = new EasyTcpClient();
 		csock[i]->Init();
 		csock[i]->Connect((char*)"192.168.1.4", 3456);
+
+	}
+	for (;;)
+	{
+		for (int i = 0; i < 1000; i++)
 		csock[i]->SendMessage((char*)"hello");
 	}
-	EasyTcpClient etc = EasyTcpClient();
-	etc.Init();
-	etc.Connect((char*)"192.168.1.4", 3456);
-	std::thread cmdt(cmdThread, &etc);
-	cmdt.detach();
-	while (etc.isRun())
-	{
-		etc.Run();
-	}
-	etc.Close();
 };
