@@ -134,9 +134,9 @@ public:
 
 	void SendMessage(char * msg)
 	{
-		DataHeader header = DataHeader(strlen(msg)+1);
-		int res = send(_sock, (char*)& header, sizeof(DataHeader), 0);
-		res =send(_sock, msg, strlen(msg) + 1, 0);
+		//DataHeader header = DataHeader(strlen(msg)+1);
+		DataBody data = DataBody(msg);
+		int res = send(_sock, (char*)& data, sizeof(data), 0);
 	}
 
 	void Run()

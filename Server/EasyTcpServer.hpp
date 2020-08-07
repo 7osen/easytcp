@@ -200,21 +200,22 @@ public:
 
 	int Accept(SOCKET cSock)
 	{
-		char recvBuf[256] = {};
-		int nlen = Recieve(cSock, recvBuf);
+		
+		int nlen = Recieve(cSock);
 		if (nlen > 0)
 		{
-			if (!strcmp(recvBuf, "")) return 0;
+			//if (!strcmp(recvBuf, "")) return 0;
 			// char msgBuf1[] = "send message success!";
-			// printf("receive message from client <SOCKET = %d>: %s\n", cSock, recvBuf);
+			
 			// Send(cSock, msgBuf1);
 			return 0;
 		}
 		else return -1;
 	}
 
-	int Recieve(SOCKET cSock, char* recvmsg)
+	int Recieve(SOCKET cSock)
 	{
+		char recvmsg[256] = {};
 		int nlen = recv(cSock, MsgBuf, MsgBufSize, 0);
 		if (nlen > 0)
 		{
@@ -234,6 +235,7 @@ public:
 				if (_Lastpos >= header->HeaderLength)
 				{
 					memcpy(recvmsg, _MsgBuf + sizeof(DataHeader), header->DataLength);
+					//printf("receive message from client <SOCKET = %d>: %s\n", cSock, recvmsg);
 					int leftnum = _Lastpos - header->HeaderLength;
 					memcpy(_MsgBuf, _MsgBuf + header->HeaderLength, leftnum);
 					_Lastpos = leftnum;
@@ -251,9 +253,8 @@ public:
 
 	void Send(SOCKET cSock, char* msg)
 	{
-		DataHeader header = DataHeader(strlen(msg) + 1);
-		send(cSock, (char*)& header, sizeof(header), 0);
-		send(cSock, msg, strlen(msg) + 1, 0);
+		DataBody data = DataBody(msg);
+		int res = send(cSock, (char*)& data, sizeof(data), 0);
 	}
 
 	void Close()
