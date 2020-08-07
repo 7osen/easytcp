@@ -4,16 +4,16 @@
 #define _WINSOCK_DEPRECATED_NO_WARNINGS
 
 #ifdef _WIN32
-#define FD_SETSIZE 1024
-#include <Windows.h>
-#include <WinSock2.h>
+	#define FD_SETSIZE 1024
+	#include <Windows.h>
+	#include <WinSock2.h>
 #else
-#include <unistd.h>
-#include <arpa/inet.h>
-#include <string.h>
-#define SOCKET int
-#define INVALID_SOCKET  (SOCKET)(~0)
-#define SOCKET_ERROR            (-1)
+	#include <unistd.h>
+	#include <arpa/inet.h>
+	#include <string.h>
+	#define SOCKET int
+	#define INVALID_SOCKET  (SOCKET)(~0)
+	#define SOCKET_ERROR            (-1)
 #endif
 
 #include <stdio.h>
@@ -30,7 +30,7 @@ class EasyTcpServer
 	std::vector<SOCKET> c_Sock;
 	int _recvCount = 0;
 	int _Lastpos = 0;
-#define MsgBufSize 40960
+#define MsgBufSize 409600
 	char _MsgBuf[MsgBufSize] = {};//second
 	char MsgBuf[MsgBufSize] = {};//first
 public:

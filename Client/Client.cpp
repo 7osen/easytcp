@@ -19,8 +19,9 @@ void cmdThread(EasyTcpClient* etc)
 }
 int main()
 {
-	EasyTcpClient* csock[1000];
-	for (int i = 0; i < 1000; i++)
+	const int N = 1000;
+	EasyTcpClient* csock[N];
+	for (int i = 0; i < N; i++)
 	{
 		csock[i] = new EasyTcpClient();
 		csock[i]->Init();
@@ -29,7 +30,7 @@ int main()
 	}
 	for (;;)
 	{
-		for (int i = 0; i < 1000; i++)
-		csock[i]->SendMessage((char*)"hello");
+		for (int i = 0; i < N; i++)
+		csock[i]->SendMessage((char*)"1");
 	}
 };
