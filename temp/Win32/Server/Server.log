@@ -6,4 +6,8 @@ C:\Program Files (x86)\Windows Kits\10\Include\10.0.18362.0\ucrt\string.h(133): 
 C:\Users\74093\AppData\Local\gitkraken\app-7.1.0\easytcp\Server\EasyTcpServer.hpp(167,22): warning C4018:  “<”: 有符号/无符号不匹配
 C:\Users\74093\AppData\Local\gitkraken\app-7.1.0\easytcp\Server\Server.cpp(8,1): warning C4996:  'scanf': This function or variable may be unsafe. Consider using scanf_s instead. To disable deprecation, use _CRT_SECURE_NO_WARNINGS. See online help for details.
 C:\Program Files (x86)\Windows Kits\10\Include\10.0.18362.0\ucrt\stdio.h(1274): message :  参见“scanf”的声明
-  Server.vcxproj -> C:\Users\74093\AppData\Local\gitkraken\app-7.1.0\easytcp\/bin/Debug\Server.exe
+  正在生成代码
+  Previous IPDB not found, fall back to full compilation.
+  All 137 functions were compiled because no usable IPDB/IOBJ from previous compilation was found.
+  已完成代码的生成
+  Server.vcxproj -> C:\Users\74093\AppData\Local\gitkraken\app-7.1.0\easytcp\/bin/Release\Server.exe

@@ -99,8 +99,6 @@ public:
 	
 	bool isRun()
 	{
-	 //std::thread cmdt(cmdThread);
-	 //cmdt.detach();
 		return _sock != INVALID_SOCKET;
 	}
 

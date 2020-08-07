@@ -30,7 +30,7 @@ class EasyTcpServer
 	std::vector<SOCKET> c_Sock;
 	int _recvCount = 0;
 	int _Lastpos = 0;
-#define MsgBufSize 409600
+#define MsgBufSize 40960
 	char _MsgBuf[MsgBufSize] = {};//second
 	char MsgBuf[MsgBufSize] = {};//first
 public:
@@ -219,7 +219,7 @@ public:
 		int nlen = recv(cSock, MsgBuf, MsgBufSize, 0);
 		if (nlen > 0)
 		{
-			_recvCount++;
+
 			double t = _timeC.getSecond();
 			if (t >= 1.0)
 			{
@@ -234,6 +234,7 @@ public:
 				DataHeader* header = (DataHeader*)_MsgBuf;
 				if (_Lastpos >= header->HeaderLength)
 				{
+					_recvCount++;
 					memcpy(recvmsg, _MsgBuf + sizeof(DataHeader), header->DataLength);
 					//printf("receive message from client <SOCKET = %d>: %s\n", cSock, recvmsg);
 					int leftnum = _Lastpos - header->HeaderLength;
