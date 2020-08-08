@@ -86,7 +86,7 @@ public:
 	{
 		if (_sock != INVALID_SOCKET)
 		{
-			printf("Client Close...\n");
+			printf("SOCKET = %d Client Close...\n",_sock);
 #ifdef _WIN32
 			closesocket(_sock);
 			WSACleanup();

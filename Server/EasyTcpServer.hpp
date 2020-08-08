@@ -18,21 +18,226 @@
 
 #include <stdio.h>
 #include <vector>
+#include <thread>
+#include <mutex>
 #include "Message.hpp"
 #include "TimeCount.hpp"
+#include <functional>
 
 #pragma comment(lib, "ws2_32.lib")
 
-class EasyTcpServer
+class CellServer
 {
-	TimeCount _timeC;
+private:
+	int _ID;
 	SOCKET _sock = INVALID_SOCKET;
+	int _ClientCount = 0;
 	std::vector<SOCKET> c_Sock;
+	std::vector<SOCKET> c_SockBuf;
+	std::thread* _thread;
+	std::mutex _m;
+	TimeCount _timeC;
 	int _recvCount = 0;
 	int _Lastpos = 0;
 #define MsgBufSize 40960
 	char _MsgBuf[MsgBufSize] = {};//second
 	char MsgBuf[MsgBufSize] = {};//first
+public:
+	CellServer(int id,SOCKET sock = INVALID_SOCKET)
+	{
+		_ID = id;
+		_sock = sock;
+	}
+
+	~CellServer()
+	{
+
+	}
+
+	void Run()
+	{
+
+		
+		while (isRun())
+		{   
+			SOCKET MaxSocket = _sock;
+			if (c_SockBuf.size())
+			{
+				for (auto newClient : c_SockBuf)
+				{
+					c_Sock.push_back(newClient);
+				}
+				_m.lock();
+				c_SockBuf.clear();
+				_m.unlock();
+			}
+			for (auto Sock : c_Sock)
+			{
+				MaxSocket = max(MaxSocket, Sock);
+			}
+			fd_set fRead;
+			fd_set fWrite;
+			fd_set fExp;
+
+			FD_ZERO(&fRead);
+			FD_ZERO(&fWrite);
+			FD_ZERO(&fExp);
+
+			FD_SET(_sock, &fRead);
+			FD_SET(_sock, &fWrite);
+			FD_SET(_sock, &fExp);
+			for (auto _csock : c_Sock)
+			{
+				FD_SET(_csock, &fRead);
+			}
+			int ret = select(MaxSocket + 1, &fRead, &fWrite, &fExp, NULL);
+			if (ret < 0)
+			{
+				printf("select end...\n");
+				break;
+			}
+			FD_CLR(_sock, &fRead);
+#ifdef _WIN32
+			for (int i = 0; i < fRead.fd_count; i++)
+			{
+				if (-1 == Accept(fRead.fd_array[i]))
+				{
+					printf("client exit : Socket = %d ...\n", (int)fRead.fd_array[i]);
+					auto iter = std::find(c_Sock.begin(), c_Sock.end(), fRead.fd_array[i]);
+					if (iter != c_Sock.end())
+					{
+						c_Sock.erase(iter);
+					}
+				}
+			}
+#else
+			for (auto i : c_Sock)
+			{
+				if (-1 == Accept(i))
+				{
+					printf("client exit : Socket = %d ...\n", (int)i);
+					for (auto iter = c_Sock.begin(); iter != c_Sock.end(); iter++)
+					{
+						if (i == *iter) c_Sock.erase(iter);
+						break;
+					}
+				}
+			}
+#endif
+		}
+	}
+
+	bool isRun()
+	{
+		return _sock != INVALID_SOCKET;
+	}
+
+	int Accept(SOCKET cSock)
+	{
+
+		int nlen = Recieve(cSock);
+		if (nlen > 0)
+		{
+			//if (!strcmp(recvBuf, "")) return 0;
+			// char msgBuf1[] = "send message success!";
+
+			// Send(cSock, msgBuf1);
+			return 0;
+		}
+		else return -1;
+	}
+
+	int Recieve(SOCKET cSock)
+	{
+		char recvmsg[256] = {};
+		int nlen = recv(cSock, MsgBuf, MsgBufSize, 0);
+		if (nlen > 0)
+		{
+
+			double t = _timeC.getSecond();
+			if (t >= 1.0)
+			{
+				printf("Server = %d,time <%lf>, <SOCKET = %d>, Client = <%d>, recieve  = <%d> message ...\n",_ID, t, _sock, c_Sock.size(), _recvCount);
+				_recvCount = 0;
+				_timeC.Update();
+			}
+			memcpy(_MsgBuf + _Lastpos, MsgBuf, nlen);
+			_Lastpos += nlen;
+			while (_Lastpos >= sizeof(DataHeader))
+			{
+				DataHeader* header = (DataHeader*)_MsgBuf;
+				if (_Lastpos >= header->HeaderLength)
+				{
+					_recvCount++;
+					memcpy(recvmsg, _MsgBuf + sizeof(DataHeader), header->DataLength);
+					//printf("receive message from client <SOCKET = %d>: %s\n", cSock, recvmsg);
+					int leftnum = _Lastpos - header->HeaderLength;
+					memcpy(_MsgBuf, _MsgBuf + header->HeaderLength, leftnum);
+					_Lastpos = leftnum;
+				}
+				else break;
+			}
+			return nlen;
+		}
+		else
+		{
+			return -1;
+		}
+		return nlen;
+	}
+
+	void Send(SOCKET cSock, char* msg)
+	{
+		DataBody data = DataBody(msg);
+		int res = send(cSock, (char*)& data, sizeof(data), 0);
+	}
+
+	void Close()
+	{
+		_sock = INVALID_SOCKET;
+	}
+
+	int getCount()
+	{
+		return _ClientCount;
+	}
+
+	void addClient(SOCKET csock)
+	{
+		_ClientCount++;
+		_m.lock();
+		c_SockBuf.push_back(csock);
+		_m.unlock();
+	}
+
+	void Start()
+	{
+		_thread = new std::thread(std::mem_fun(&CellServer::Run), this);
+	}
+
+
+};
+
+
+class EasyTcpServer
+{
+private:
+	TimeCount _timeC;
+	int _recvCount = 0;
+	int _Lastpos = 0;
+
+	SOCKET _sock = INVALID_SOCKET;
+
+#define _ServerThreadCount 4
+	std::vector<CellServer*> _Servers;
+
+	std::vector<SOCKET> c_Sock;
+
+
+#define MsgBufSize 40960
+	char _MsgBuf[MsgBufSize] = {};//second
+	char MsgBuf[MsgBufSize] = {};//first
+
 public:
 	EasyTcpServer()
 	{
@@ -115,81 +320,42 @@ public:
 		}
 	}
 
+	void Start()
+	{
+		for (int i = 0; i < _ServerThreadCount; i++)
+		{
+			CellServer* server = new CellServer(i+1,_sock);
+			server->Start();
+			_Servers.push_back(server);
+		}
+	}
+
 	void Run()
 	{
-
-		if (INVALID_SOCKET == _sock) init();
-		while (isRun())
+		sockaddr_in clientAddr = {};
+		int nAddrLen = sizeof(sockaddr_in);
+		SOCKET _cSock = INVALID_SOCKET;
+#ifdef _WIN32
+		_cSock = accept(_sock, (sockaddr*)& clientAddr, &nAddrLen);
+#else
+		_cSock = accept(_sock, (sockaddr*)& clientAddr, (socklen_t*)& nAddrLen);
+#endif
+		if (INVALID_SOCKET == _cSock)
 		{
-			fd_set fRead;
-			fd_set fWrite;
-			fd_set fExp;
-
-			FD_ZERO(&fRead);
-			FD_ZERO(&fWrite);
-			FD_ZERO(&fExp);
-
-			FD_SET(_sock, &fRead);
-			FD_SET(_sock, &fWrite);
-			FD_SET(_sock, &fExp);
-			for (auto _csock : c_Sock)
+			printf("client connect error!\n");
+		}
+		else
+		{
+			printf("new client connect : Socket = %d, IP = %s ...\n", (int)_cSock, inet_ntoa(clientAddr.sin_addr));
+			CellServer* minServer = _Servers[0];
+			for (auto server : _Servers)
 			{
-				FD_SET(_csock, &fRead);
-			}
-			int ret = select(_sock + 1, &fRead, &fWrite, &fExp, NULL);
-			if (ret < 0)
-			{
-				printf("select end...\n");
-				break;
-			}
-			if (FD_ISSET(_sock, &fRead))
-			{
-				FD_CLR(_sock, &fRead);
-				sockaddr_in clientAddr = {};
-				int nAddrLen = sizeof(sockaddr_in);
-				SOCKET _cSock = INVALID_SOCKET;
-#ifdef _WIN32
-				_cSock = accept(_sock, (sockaddr*)& clientAddr, &nAddrLen);
-#else
-				_cSock = accept(_sock, (sockaddr*)& clientAddr, (socklen_t*)& nAddrLen);
-#endif
-				if (INVALID_SOCKET == _cSock)
+				if (server->getCount() < minServer->getCount())
 				{
-					printf("client connect error!\n");
-				}
-				else
-				{
-					printf("new client connect : Socket = %d, IP = %s ...\n", (int)_cSock, inet_ntoa(clientAddr.sin_addr));
-					c_Sock.push_back(_cSock);
+					minServer = server;
 				}
 			}
-#ifdef _WIN32
-			for (int i = 0; i < fRead.fd_count; i++)
-			{
-				if (-1 == Accept(fRead.fd_array[i]))
-				{
-					printf("client exit : Socket = %d ...\n", (int)fRead.fd_array[i]);
-					auto iter = std::find(c_Sock.begin(), c_Sock.end(), fRead.fd_array[i]);
-					if (iter != c_Sock.end())
-					{
-						c_Sock.erase(iter);
-					}
-				}
-			}
-#else
-			for (auto i : c_Sock)
-			{
-				if (-1 == Accept(i))
-				{
-					printf("client exit : Socket = %d ...\n", (int)i);
-					for (auto iter = c_Sock.begin(); iter != c_Sock.end(); iter++)
-					{
-						if (i == *iter) c_Sock.erase(iter);
-						break;
-					}
-				}
-			}
-#endif
+			minServer->addClient(_cSock);
 		}
 	}
 
@@ -200,13 +366,13 @@ public:
 
 	int Accept(SOCKET cSock)
 	{
-		
+
 		int nlen = Recieve(cSock);
 		if (nlen > 0)
 		{
 			//if (!strcmp(recvBuf, "")) return 0;
 			// char msgBuf1[] = "send message success!";
-			
+
 			// Send(cSock, msgBuf1);
 			return 0;
 		}
@@ -272,7 +438,6 @@ public:
 		_sock = INVALID_SOCKET;
 	}
 
-private:
 
 };
 

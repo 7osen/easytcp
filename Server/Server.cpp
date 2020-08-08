@@ -22,9 +22,10 @@ int main()
 	ets.init();
 	ets.Bind(nullptr, 3456);
 	ets.Listen();
+	ets.Start();
 	std::thread cmdt(cmdThread, &ets);
 	cmdt.detach();
-	ets.Run();
+	while (ets.isRun()) ets.Run();
 	ets.Close();
 	return 0;
 }

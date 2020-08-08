@@ -17,11 +17,13 @@ void cmdThread(EasyTcpClient* etc)
 		}
 	}
 }
-int main()
+const int N = 500;
+EasyTcpClient* csock[4*N];
+void sendThread(int id)
 {
-	const int N = 1000;
-	EasyTcpClient* csock[N];
-	for (int i = 0; i < N; i++)
+	int begin = id * N;
+	int end = N * (id + 1);
+	for (int i = begin; i < end; i++)
 	{
 		csock[i] = new EasyTcpClient();
 		csock[i]->Init();
@@ -30,7 +32,16 @@ int main()
 	}
 	for (;;)
 	{
-		for (int i = 0; i < N; i++)
-		csock[i]->SendMessage((char*)"1");
+		for (int i = begin; i < end; i++)
+			csock[i]->SendMessage((char*)"1");
 	}
+}
+int main()
+{
+	for (int i = 0; i < 4; i++)
+	{
+		std::thread t1(sendThread,i);
+		t1.detach();
+	}
+	for (;;);
 };
