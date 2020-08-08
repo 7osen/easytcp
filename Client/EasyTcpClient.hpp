@@ -22,9 +22,10 @@
 #pragma comment(lib, "ws2_32.lib")
 class EasyTcpClient
 {
+private:
 	SOCKET _sock = INVALID_SOCKET;
 	int _Lastpos = 0;
-	static const int MsgBufSize = 409600;
+	static const int MsgBufSize = 1024;
 	char _MsgBuf[MsgBufSize] = "";//second
 	char MsgBuf[MsgBufSize] = "";//first
 public:
@@ -54,7 +55,7 @@ public:
 		}
 		else
 		{
-			printf("build socket success!\n");
+			printf("build socket = %d success!\n",_sock);
 		}
 	}
 
@@ -73,6 +74,7 @@ public:
 		if (SOCKET_ERROR == retc)
 		{
 			printf("connect error!\n");
+			Close();
 
 		}
 		else
@@ -86,19 +88,17 @@ public:
 	{
 		if (_sock != INVALID_SOCKET)
 		{
-			printf("SOCKET = %d Client Close...\n",_sock);
-#ifdef _WIN32
 			closesocket(_sock);
-			WSACleanup();
-#else 
-			close(_sock);
-#endif
+			printf("SOCKET = %d Client Close...\n", _sock);
 		}
 		_sock = INVALID_SOCKET;
 	}
 	
 	bool isRun()
 	{
+		if (_sock != INVALID_SOCKET)
+			return _sock != INVALID_SOCKET;
+		else printf("SOCKET = %d exit...\n", _sock);
 		return _sock != INVALID_SOCKET;
 	}
 
@@ -174,7 +174,7 @@ public:
 			}
 		}
 	}
-private:
+
 	
 };
 #endif // !_EasyTcpClient_hpp_

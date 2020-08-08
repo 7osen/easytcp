@@ -17,7 +17,7 @@ void cmdThread(EasyTcpClient* etc)
 		}
 	}
 }
-const int N = 500;
+const int N = 1000;
 EasyTcpClient* csock[4*N];
 void sendThread(int id)
 {
@@ -33,15 +33,29 @@ void sendThread(int id)
 	for (;;)
 	{
 		for (int i = begin; i < end; i++)
-			csock[i]->SendMessage((char*)"1");
+			if (csock[i]->isRun()) csock[i]->SendMessage((char*)"1");
+			else printf("Client = %d error... \n ", i);
 	}
 }
 int main()
 {
+
 	for (int i = 0; i < 4; i++)
 	{
 		std::thread t1(sendThread,i);
 		t1.detach();
 	}
+	/*
+	for (int i = 0; i < N * 4; i++)
+	{
+		csock[i] = new EasyTcpClient();
+		csock[i]->Init();
+		csock[i]->Connect((char*)"192.168.1.4", 3456);
+	}
+	for (;;) for (int i = 0; i < N * 4; i++) if (csock[i]->isRun()) csock[i]->SendMessage((char*)"1");*/
 	for (;;);
-};
+
+#ifdef _WIN32
+	WSACleanup();
+#endif
+}

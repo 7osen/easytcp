@@ -4,7 +4,7 @@
 #define _WINSOCK_DEPRECATED_NO_WARNINGS
 
 #ifdef _WIN32
-	#define FD_SETSIZE 1024
+	#define FD_SETSIZE 4096
 	#include <Windows.h>
 	#include <WinSock2.h>
 #else
@@ -30,16 +30,22 @@ class CellServer
 {
 private:
 	int _ID;
+
 	SOCKET _sock = INVALID_SOCKET;
+
 	int _ClientCount = 0;
+
 	std::vector<SOCKET> c_Sock;
 	std::vector<SOCKET> c_SockBuf;
 	std::thread* _thread;
 	std::mutex _m;
+
 	TimeCount _timeC;
+
 	int _recvCount = 0;
 	int _Lastpos = 0;
-#define MsgBufSize 40960
+
+	const static int MsgBufSize = 40960;
 	char _MsgBuf[MsgBufSize] = {};//second
 	char MsgBuf[MsgBufSize] = {};//first
 public:
@@ -228,13 +234,12 @@ private:
 
 	SOCKET _sock = INVALID_SOCKET;
 
-#define _ServerThreadCount 4
+	const static int _ServerThreadCount = 4;
 	std::vector<CellServer*> _Servers;
 
 	std::vector<SOCKET> c_Sock;
 
-
-#define MsgBufSize 40960
+	const static int  MsgBufSize = 40960;
 	char _MsgBuf[MsgBufSize] = {};//second
 	char MsgBuf[MsgBufSize] = {};//first
 
