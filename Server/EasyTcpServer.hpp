@@ -69,11 +69,11 @@ public:
 			SOCKET MaxSocket = _sock;
 			if (c_SockBuf.size())
 			{
+				_m.lock();
 				for (auto newClient : c_SockBuf)
 				{
 					c_Sock.push_back(newClient);
 				}
-				_m.lock();
 				c_SockBuf.clear();
 				_m.unlock();
 			}
@@ -210,8 +210,8 @@ public:
 
 	void addClient(SOCKET csock)
 	{
-		_ClientCount++;
 		_m.lock();
+		_ClientCount++;
 		c_SockBuf.push_back(csock);
 		_m.unlock();
 	}
