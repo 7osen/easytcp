@@ -13,7 +13,7 @@ void cmdThread(EasyTcpClient* etc)
 		}
 		else
 		{
-			etc->SendMessage(msgBuf);
+			etc->Send(msgBuf);
 		}
 	}
 }
@@ -33,7 +33,7 @@ void sendThread(int id)
 	for (;;)
 	{
 		for (int i = begin; i < end; i++)
-			if (csock[i]->isRun()) csock[i]->SendMessage((char*)"1");
+			if (csock[i]->isRun()) csock[i]->Send((char*)"1");
 			else printf("Client = %d error... \n ", i);
 	}
 }

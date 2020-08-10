@@ -3,6 +3,7 @@
 #define WIN32_LEAN_AND_MEAN
 #define _WINSOCK_DEPRECATED_NO_WARNINGS
 
+
 #ifdef _WIN32
 	#define FD_SETSIZE 4096
 	#include <Windows.h>
@@ -16,17 +17,18 @@
 	#define SOCKET_ERROR            (-1)
 #endif
 
+
+#include "Message.hpp"
+#include "TimeCount.hpp"
 #include <stdio.h>
 #include <vector>
 #include <thread>
 #include <mutex>
-#include "Message.hpp"
-#include "TimeCount.hpp"
 #include <functional>
 
 #pragma comment(lib, "ws2_32.lib")
 
-class CellServer
+class CellServer:public SendAndRecieveMessage
 {
 private:
 	int _ID;
@@ -41,15 +43,6 @@ private:
 	std::mutex _m;
 
 	fd_set _fRead;
-
-	TimeCount _timeC;
-
-	int _recvCount = 0;
-	int _Lastpos = 0;
-
-	const static int MsgBufSize = 40960;
-	char _MsgBuf[MsgBufSize] = {};//second
-	char MsgBuf[MsgBufSize] = {};//first
 public:
 	CellServer(int id,SOCKET sock = INVALID_SOCKET)
 	{
@@ -191,12 +184,6 @@ public:
 		return nlen;
 	}
 
-	void Send(SOCKET cSock, char* msg)
-	{
-		DataBody data = DataBody(msg);
-		int res = send(cSock, (char*)& data, sizeof(data), 0);
-	}
-
 	void Close()
 	{
 		_sock = INVALID_SOCKET;
@@ -224,24 +211,15 @@ public:
 };
 
 
-class EasyTcpServer
+class EasyTcpServer: public SendAndRecieveMessage
 {
 private:
-	TimeCount _timeC;
-	int _recvCount = 0;
-	int _Lastpos = 0;
-
 	SOCKET _sock = INVALID_SOCKET;
 
 	const static int _ServerThreadCount = 4;
 	std::vector<CellServer*> _Servers;
 
 	std::vector<SOCKET> c_Sock;
-
-	const static int  MsgBufSize = 40960;
-	char _MsgBuf[MsgBufSize] = {};//second
-	char MsgBuf[MsgBufSize] = {};//first
-
 public:
 	EasyTcpServer()
 	{
@@ -420,12 +398,6 @@ public:
 			return -1;
 		}
 		return nlen;
-	}
-
-	void Send(SOCKET cSock, char* msg)
-	{
-		DataBody data = DataBody(msg);
-		int res = send(cSock, (char*)& data, sizeof(data), 0);
 	}
 
 	void Close()

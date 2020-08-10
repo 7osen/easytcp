@@ -20,20 +20,16 @@
 #include "Message.hpp"
 
 #pragma comment(lib, "ws2_32.lib")
-class EasyTcpClient
+class EasyTcpClient:public SendAndRecieveMessage
 {
 private:
 	SOCKET _sock = INVALID_SOCKET;
-	int _Lastpos = 0;
-	static const int MsgBufSize = 1024;
-	char _MsgBuf[MsgBufSize] = "";//second
-	char MsgBuf[MsgBufSize] = "";//first
 public:
 	EasyTcpClient()
 	{
 	}
 
-	virtual ~EasyTcpClient()
+	~EasyTcpClient()
 	{
 		Close();
 	}
@@ -101,40 +97,10 @@ public:
 		else printf("SOCKET = %d exit...\n", _sock);
 		return _sock != INVALID_SOCKET;
 	}
-
-	int Recieve(char* recvmsg)
+    
+	void Send(char* msg)
 	{
-		int nlen = recv(_sock, MsgBuf, MsgBufSize, 0);
-		if (nlen > 0)
-		{
-			memcpy(_MsgBuf + _Lastpos, MsgBuf, nlen);
-			_Lastpos += nlen;
-			while (_Lastpos >= sizeof(DataHeader))
-			{
-				DataHeader* header = (DataHeader*)_MsgBuf;
-				if (_Lastpos >= header->HeaderLength)
-				{
-					memcpy(recvmsg, _MsgBuf + sizeof(DataHeader), header->DataLength);
-					int leftnum = _Lastpos - header->HeaderLength;
-					memcpy(_MsgBuf, _MsgBuf + header->HeaderLength, leftnum);
-					_Lastpos = leftnum;
-				}
-				else break;
-			}
-			return nlen;
-		}
-		else
-		{
-			return -1;
-		}
-		return nlen;
-	}
-
-	void SendMessage(char * msg)
-	{
-		//DataHeader header = DataHeader(strlen(msg)+1);
-		DataBody data = DataBody(msg);
-		int res = send(_sock, (char*)& data, sizeof(data), 0);
+		SendAndRecieveMessage::Send(_sock, msg);
 	}
 
 	void Run()
@@ -162,7 +128,7 @@ public:
 			if (FD_ISSET(_sock, &fRead))
 			{
 				char recvBuf[256] = "";
-				if (-1 == Recieve(recvBuf))
+				if (-1 == Recieve(_sock,recvBuf))
 				{
 					printf("connect break...");
 					Close();
