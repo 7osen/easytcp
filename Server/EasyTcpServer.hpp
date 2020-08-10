@@ -40,6 +40,8 @@ private:
 	std::thread* _thread;
 	std::mutex _m;
 
+	fd_set _fRead;
+
 	TimeCount _timeC;
 
 	int _recvCount = 0;
@@ -62,8 +64,8 @@ public:
 
 	void Run()
 	{
-
-		
+		FD_ZERO(&_fRead);
+		FD_SET(_sock, &_fRead);
 		while (isRun())
 		{   
 			SOCKET MaxSocket = _sock;
@@ -73,6 +75,7 @@ public:
 				for (auto newClient : c_SockBuf)
 				{
 					c_Sock.push_back(newClient);
+					FD_SET(newClient, &_fRead);
 				}
 				c_SockBuf.clear();
 				_m.unlock();
@@ -82,21 +85,16 @@ public:
 				MaxSocket = max(MaxSocket, Sock);
 			}
 			fd_set fRead;
-			fd_set fWrite;
-			fd_set fExp;
 
 			FD_ZERO(&fRead);
-			FD_ZERO(&fWrite);
-			FD_ZERO(&fExp);
 
-			FD_SET(_sock, &fRead);
-			FD_SET(_sock, &fWrite);
-			FD_SET(_sock, &fExp);
-			for (auto _csock : c_Sock)
+			fRead.fd_count = _fRead.fd_count;
+			for (int i = 0; i < fRead.fd_count; i++)
 			{
-				FD_SET(_csock, &fRead);
+				fRead.fd_array[i] = _fRead.fd_array[i];
 			}
-			int ret = select(MaxSocket + 1, &fRead, &fWrite, &fExp, NULL);
+
+			int ret = select(MaxSocket + 1, &fRead, nullptr, nullptr, NULL);
 			if (ret < 0)
 			{
 				printf("select end...\n");
@@ -114,6 +112,7 @@ public:
 					{
 						c_Sock.erase(iter);
 					}
+					FD_CLR(fRead.fd_array[i], &_fRead);
 				}
 			}
 #else
