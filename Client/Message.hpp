@@ -33,7 +33,7 @@ protected:
 	int _recvCount = 0;
 	int _Lastpos = 0;
 
-	const static int  MsgBufSize = 40960;
+	const static int  MsgBufSize = 4096;
 	char _MsgBuf[MsgBufSize] = {};//second
 	char MsgBuf[MsgBufSize] = {};//first
 public:

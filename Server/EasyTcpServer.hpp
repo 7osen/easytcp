@@ -17,9 +17,10 @@
 	#define SOCKET_ERROR            (-1)
 #endif
 
-
+#include "Memory.hpp"
 #include "Message.hpp"
 #include "TimeCount.hpp"
+
 #include <stdio.h>
 #include <vector>
 #include <thread>

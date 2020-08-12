@@ -142,6 +142,7 @@
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="EasyTcpClient.hpp" />
+    <ClInclude Include="Memory.hpp" />
     <ClInclude Include="Message.hpp" />
     <ClInclude Include="TimeCount.hpp" />
   </ItemGroup>

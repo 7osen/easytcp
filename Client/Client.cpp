@@ -1,4 +1,5 @@
 #include "EasyTcpClient.hpp"
+
 void cmdThread(EasyTcpClient* etc)
 {
 	while (true)

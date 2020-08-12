@@ -17,7 +17,9 @@
 
 #include <stdio.h>
 #include <thread>
+#include "Memory.hpp"
 #include "Message.hpp"
+
 
 #pragma comment(lib, "ws2_32.lib")
 class EasyTcpClient:public SendAndRecieveMessage
@@ -143,4 +145,5 @@ public:
 
 	
 };
+
 #endif // !_EasyTcpClient_hpp_

@@ -3,8 +3,6 @@ Microsoft Visual Studio Solution File, Format Version 12.00
 # Visual Studio Version 16
 VisualStudioVersion = 16.0.29123.88
 MinimumVisualStudioVersion = 10.0.40219.1
-Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "easytcp", "easytcp.vcxproj", "{90ED3E91-1367-4225-8DCB-D43C1A863EA7}"
-EndProject
 Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "Server", "Server\Server.vcxproj", "{9B7A9877-0EDE-4A52-A043-2D940617407E}"
 EndProject
 Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "Client", "Client\Client.vcxproj", "{017D9588-D8EF-463B-8132-BA0A29491180}"
@@ -17,14 +15,6 @@ Global
 		Release|x86 = Release|x86
 	EndGlobalSection
 	GlobalSection(ProjectConfigurationPlatforms) = postSolution
-		{90ED3E91-1367-4225-8DCB-D43C1A863EA7}.Debug|x64.ActiveCfg = Debug|x64
-		{90ED3E91-1367-4225-8DCB-D43C1A863EA7}.Debug|x64.Build.0 = Debug|x64
-		{90ED3E91-1367-4225-8DCB-D43C1A863EA7}.Debug|x86.ActiveCfg = Debug|Win32
-		{90ED3E91-1367-4225-8DCB-D43C1A863EA7}.Debug|x86.Build.0 = Debug|Win32
-		{90ED3E91-1367-4225-8DCB-D43C1A863EA7}.Release|x64.ActiveCfg = Release|x64
-		{90ED3E91-1367-4225-8DCB-D43C1A863EA7}.Release|x64.Build.0 = Release|x64
-		{90ED3E91-1367-4225-8DCB-D43C1A863EA7}.Release|x86.ActiveCfg = Release|Win32
-		{90ED3E91-1367-4225-8DCB-D43C1A863EA7}.Release|x86.Build.0 = Release|Win32
 		{9B7A9877-0EDE-4A52-A043-2D940617407E}.Debug|x64.ActiveCfg = Debug|x64
 		{9B7A9877-0EDE-4A52-A043-2D940617407E}.Debug|x64.Build.0 = Debug|x64
 		{9B7A9877-0EDE-4A52-A043-2D940617407E}.Debug|x86.ActiveCfg = Debug|Win32
