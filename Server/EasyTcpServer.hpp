@@ -5,16 +5,16 @@
 
 
 #ifdef _WIN32
-	#define FD_SETSIZE 4096
-	#include <Windows.h>
-	#include <WinSock2.h>
+#define FD_SETSIZE 4096
+#include <Windows.h>
+#include <WinSock2.h>
 #else
-	#include <unistd.h>
-	#include <arpa/inet.h>
-	#include <string.h>
-	#define SOCKET int
-	#define INVALID_SOCKET  (SOCKET)(~0)
-	#define SOCKET_ERROR            (-1)
+#include <unistd.h>
+#include <arpa/inet.h>
+#include <string.h>
+#define SOCKET int
+#define INVALID_SOCKET  (SOCKET)(~0)
+#define SOCKET_ERROR            (-1)
 #endif
 
 #include "Memory.hpp"
@@ -29,7 +29,7 @@
 
 #pragma comment(lib, "ws2_32.lib")
 
-class CellServer:public SendAndRecieveMessage
+class CellServer :public SendAndRecieveMessage
 {
 private:
 	int _ID;
@@ -45,7 +45,7 @@ private:
 
 	fd_set _fRead;
 public:
-	CellServer(int id,SOCKET sock = INVALID_SOCKET)
+	CellServer(int id, SOCKET sock = INVALID_SOCKET)
 	{
 		_ID = id;
 		_sock = sock;
@@ -61,7 +61,7 @@ public:
 		FD_ZERO(&_fRead);
 		FD_SET(_sock, &_fRead);
 		while (isRun())
-		{   
+		{
 			SOCKET MaxSocket = _sock;
 			if (c_SockBuf.size())
 			{
@@ -76,53 +76,53 @@ public:
 			}
 			for (auto Sock : c_Sock)
 			{
+#ifdef _WIN32
 				MaxSocket = max(MaxSocket, Sock);
+#else
+				MaxSocket = std::max(MaxSocket, Sock);
+#endif
 			}
-			fd_set fRead;
+			//fd_set fRead;
 
-			FD_ZERO(&fRead);
+			//FD_ZERO(&fRead);
 
-			fRead.fd_count = _fRead.fd_count;
-			for (int i = 0; i < fRead.fd_count; i++)
-			{
-				fRead.fd_array[i] = _fRead.fd_array[i];
-			}
+			//fRead.fd_count = _fRead.fd_count;
+			//for (int i = 0; i < fRead.fd_count; i++)
+			//{
+			//	fRead.fd_array[i] = _fRead.fd_array[i];
+			//}
 
-			int ret = select(MaxSocket + 1, &fRead, nullptr, nullptr, NULL);
+			timeval t;
+			t.tv_sec = 3;
+			t.tv_usec = 0;
+			int ret = select(MaxSocket + 1, &_fRead, nullptr, nullptr, &t);
 			if (ret < 0)
 			{
-				printf("select end...\n");
-				break;
+				continue;
 			}
-			FD_CLR(_sock, &fRead);
-#ifdef _WIN32
-			for (int i = 0; i < fRead.fd_count; i++)
-			{
-				if (-1 == Accept(fRead.fd_array[i]))
-				{
-					printf("client exit : Socket = %d ...\n", (int)fRead.fd_array[i]);
-					auto iter = std::find(c_Sock.begin(), c_Sock.end(), fRead.fd_array[i]);
-					if (iter != c_Sock.end())
-					{
-						c_Sock.erase(iter);
-					}
-					FD_CLR(fRead.fd_array[i], &_fRead);
-				}
-			}
-#else
+			FD_CLR(_sock, &_fRead);
 			for (auto i : c_Sock)
 			{
 				if (-1 == Accept(i))
 				{
-					printf("client exit : Socket = %d ...\n", (int)i);
+					printf("client exit : Socket = %d ...\n", i);
+#ifdef _WIN32
+					auto iter = std::find(c_Sock.begin(), c_Sock.end(), i);
+					if (iter != c_Sock.end())
+					{
+						c_Sock.erase(iter);
+					}
+#else
 					for (auto iter = c_Sock.begin(); iter != c_Sock.end(); iter++)
 					{
 						if (i == *iter) c_Sock.erase(iter);
 						break;
 					}
+
+#endif
+					FD_CLR(i, &_fRead);
 				}
 			}
-#endif
 		}
 	}
 
@@ -156,7 +156,7 @@ public:
 			double t = _timeC.getSecond();
 			if (t >= 1.0)
 			{
-				printf("Server = %d,time <%lf>, <SOCKET = %d>, Client = <%d>, recieve  = <%d> message ...\n",_ID, t, _sock, c_Sock.size(), _recvCount);
+				printf("Server = %d,time <%lf>, <SOCKET = %d>, Client = <%d>, recieve  = <%d> message ...\n", _ID, t, _sock, (int)c_Sock.size(), _recvCount);
 				_recvCount = 0;
 				_timeC.Update();
 			}
@@ -212,7 +212,7 @@ public:
 };
 
 
-class EasyTcpServer: public SendAndRecieveMessage
+class EasyTcpServer : public SendAndRecieveMessage
 {
 private:
 	SOCKET _sock = INVALID_SOCKET;
@@ -307,7 +307,7 @@ public:
 	{
 		for (int i = 0; i < _ServerThreadCount; i++)
 		{
-			CellServer* server = new CellServer(i+1,_sock);
+			CellServer* server = new CellServer(i + 1, _sock);
 			server->Start();
 			_Servers.push_back(server);
 		}
@@ -372,7 +372,7 @@ public:
 			double t = _timeC.getSecond();
 			if (t >= 1.0)
 			{
-				printf("time <%lf>, <SOCKET = %d>, Client = <%d>, recieve  = <%d> message ...\n", t, _sock, c_Sock.size(), _recvCount);
+				printf("time <%lf>, <SOCKET = %d>, Client = <%d>, recieve  = <%d> message ...\n", t, _sock, (int)c_Sock.size(), _recvCount);
 				_recvCount = 0;
 				_timeC.Update();
 			}

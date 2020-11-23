@@ -3,6 +3,7 @@
 #include<stdlib.h>
 #include<iostream>
 #include<mutex>
+#include<list>
 
 class MemoryPool;
 
@@ -154,9 +155,6 @@ private:
 
 public:
 
-
-
-
 	static MemoryManager& getInstance()
 	{
 		static MemoryManager _instance;
@@ -230,5 +228,47 @@ void mem_free(void* p)
 {
 	MemoryManager::getInstance().deallocate(p);
 }
+template <typename Type>
+class ObjectPool
+{
+public:
+	ObjectPool(int size)
+		:_size(size)
+	{
+		_list.clear();
+		for (int i = 0; i < size; i++)
+			_list.push_front(new Type());
+	}
+	~ObjectPool()
+	{
+		for (; !_list.empty();)
+		{
+			delete _list.front();
+			_list.pop_front();
+		}
+	}
+	Type* Get_Object()
+	{
+		_m.lock();
+		if (!_size) return (new Type());
+		Type* p = _list.front();
+		_list.pop_front();
+		_size--;
+		_m.unlock();
+		return p;
+	}
+	void RetrunObject(Type* p)
+	{
+		_m.lock();
+		_list.push_front(p);
+		_size++;
+		_m.unlock();
+	}
+
+private:
+	int _size;
+	std::list<Type*> _list;
+	std::mutex _m;
+};
 
 #endif // !_Memory_hpp_
