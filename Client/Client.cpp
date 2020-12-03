@@ -30,25 +30,24 @@ void sendThread(int id)
 	{
 		csock[i] = new EasyTcpClient();
 		csock[i]->Init();
-		csock[i]->Connect((char*)"192.168.17.130", 3456);
-	//	csock[i]->Connect((char*)"10.5.179.40", 3456);
-
+	//	csock[i]->Connect((char*)"192.168.17.130", 3456);
+		csock[i]->Connect((char*)"10.5.179.40", 3456);
+		csock[i]->Send((char*)"1");
 	}
 	for (;;)
 	{
 		for (int i = begin; i < end; i++)
-		//if (csock[i] != nullptr)
+		if (csock[i] != nullptr)
 		{ 
 			if (csock[i]->isRun()) csock[i]->Send((char*)"1");
 			else
 			{
 				printf("Client = %d error... \n ", i);
 			//	CsockPoll->RetrunObject(csock[i]);
-			//	csock[i] = nullptr;
+				csock[i] = nullptr;
+				
 			}
 		}
-		Sleep(1000);
-		printf("next\n");
 	}
 }
 int main()

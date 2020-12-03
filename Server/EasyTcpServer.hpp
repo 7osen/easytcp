@@ -58,11 +58,20 @@ public:
 
 	void Run()
 	{
+		bool SOCKET_CHANGE = false;
 		FD_ZERO(&_fRead);
 		FD_SET(_sock, &_fRead);
+		SOCKET MaxSocket = _sock;
 		while (isRun())
 		{
-			SOCKET MaxSocket = _sock;
+			double t = _timeC.getSecond();
+			if (t >= 1.0)
+			{
+				printf("Server = %d,time <%lf>, <SOCKET = %d>, Client = <%d>, recieve  = <%d> message ...\n", _ID, t, _sock, (int)c_Sock.size(), _recvCount);
+				_recvCount = 0;
+				_timeC.Update();
+			}
+
 			if (c_SockBuf.size())
 			{
 				_m.lock();
@@ -70,18 +79,33 @@ public:
 				{
 					c_Sock.push_back(newClient);
 					FD_SET(newClient, &_fRead);
+					if (newClient > MaxSocket) MaxSocket = newClient;
 				}
 				c_SockBuf.clear();
 				_m.unlock();
 			}
-			for (auto Sock : c_Sock)
-			{
+			if (!c_Sock.size()) continue;
+			
+			fd_set fRead;
+			FD_ZERO(&fRead);
+			FD_SET(_sock, &fRead);
+			if (SOCKET_CHANGE)
+				for (auto Sock : c_Sock)
+				{
+
+					FD_SET(Sock, &fRead);
 #ifdef _WIN32
-				MaxSocket = max(MaxSocket, Sock);
+					MaxSocket = max(MaxSocket, Sock);
 #else
-				MaxSocket = std::max(MaxSocket, Sock);
+					MaxSocket = std::max(MaxSocket, Sock);
 #endif
+					memcpy(&_fRead, &fRead, sizeof(fd_set));
+				}
+			else
+			{
+				memcpy(&fRead, &_fRead, sizeof(fd_set));
 			}
+
 			//fd_set fRead;
 
 			//FD_ZERO(&fRead);
@@ -92,37 +116,52 @@ public:
 			//	fRead.fd_array[i] = _fRead.fd_array[i];
 			//}
 
-			timeval t;
-			t.tv_sec = 3;
-			t.tv_usec = 0;
-			int ret = select(MaxSocket + 1, &_fRead, nullptr, nullptr, &t);
-			if (ret < 0)
+			SOCKET_CHANGE = false;
+			timeval Out_time;
+			Out_time.tv_sec = 1;
+			Out_time.tv_usec = 0;
+			int ret = select(MaxSocket + 1, &fRead, nullptr, nullptr, &Out_time);
+			if (ret <= 0)
 			{
 				continue;
 			}
-			FD_CLR(_sock, &_fRead);
-			for (auto i : c_Sock)
-			{
-				if (-1 == Accept(i))
-				{
-					printf("client exit : Socket = %d ...\n", i);
+			FD_CLR(_sock, &fRead);
+
 #ifdef _WIN32
-					auto iter = std::find(c_Sock.begin(), c_Sock.end(), i);
+			for (int i = 0; i < (int)fRead.fd_count; i++)
+			{
+				if (-1 == Accept(fRead.fd_array[i]))
+				{
+					printf("client exit : Socket = %d ...\n", fRead.fd_array[i]);
+					auto iter = std::find(c_Sock.begin(), c_Sock.end(), fRead.fd_array[i]);
 					if (iter != c_Sock.end())
 					{
 						c_Sock.erase(iter);
+						SOCKET_CHANGE = true;
 					}
+				}
+				
+			}
+			
+			
+
+
 #else
+			for (auto i : c_Sock)
+			{
+				if (FD_ISSET(i,&fRead) && -1 == Accept(i))
+				{
+					printf("client exit : Socket = %d ...\n", i);
+					SOCKET_CHANGE = true;
 					for (auto iter = c_Sock.begin(); iter != c_Sock.end(); iter++)
 					{
 						if (i == *iter) c_Sock.erase(iter);
 						break;
 					}
 
-#endif
-					FD_CLR(i, &_fRead);
 				}
 			}
+#endif
 		}
 	}
 
@@ -153,13 +192,7 @@ public:
 		if (nlen > 0)
 		{
 
-			double t = _timeC.getSecond();
-			if (t >= 1.0)
-			{
-				printf("Server = %d,time <%lf>, <SOCKET = %d>, Client = <%d>, recieve  = <%d> message ...\n", _ID, t, _sock, (int)c_Sock.size(), _recvCount);
-				_recvCount = 0;
-				_timeC.Update();
-			}
+			
 			memcpy(_MsgBuf + _Lastpos, MsgBuf, nlen);
 			_Lastpos += nlen;
 			while (_Lastpos >= sizeof(DataHeader))
@@ -189,7 +222,6 @@ public:
 	{
 		_sock = INVALID_SOCKET;
 	}
-
 	int getCount()
 	{
 		return _ClientCount;
@@ -329,7 +361,7 @@ public:
 		}
 		else
 		{
-			printf("new client connect : Socket = %d, IP = %s ...\n", (int)_cSock, inet_ntoa(clientAddr.sin_addr));
+			//printf("new client connect : Socket = %d, IP = %s ...\n", (int)_cSock, inet_ntoa(clientAddr.sin_addr));
 			CellServer* minServer = _Servers[0];
 			for (auto server : _Servers)
 			{

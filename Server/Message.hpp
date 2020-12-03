@@ -39,7 +39,7 @@ protected:
 public:
 	SendAndRecieveMessage()
 	{
-
+		_timeC.Update();
 	}
 	virtual ~SendAndRecieveMessage()
 	{
