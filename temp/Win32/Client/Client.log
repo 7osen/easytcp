@@ -1,13 +1,10 @@
 ﻿C:\Program Files (x86)\Microsoft Visual Studio\2019\Community\MSBuild\Microsoft\VC\v160\Microsoft.CppBuild.targets(437,5): warning MSB8004: Intermediate Directory does not end with a trailing slash.  This build instance will add the slash as it is required to allow proper evaluation of the Intermediate Directory.
 C:\Program Files (x86)\Microsoft Visual Studio\2019\Community\MSBuild\Microsoft\VC\v160\Microsoft.CppBuild.targets(438,5): warning MSB8004: Output Directory does not end with a trailing slash.  This build instance will add the slash as it is required to allow proper evaluation of the Output Directory.
   Client.cpp
-C:\Users\74093\AppData\Local\gitkraken\app-7.1.0\easytcp\Client\Memory.hpp(103,21): warning C4018:  “<”: 有符号/无符号不匹配
-C:\Users\74093\AppData\Local\gitkraken\app-7.1.0\easytcp\Client\Message.hpp(26,1): warning C4996:  'strcpy': This function or variable may be unsafe. Consider using strcpy_s instead. To disable deprecation, use _CRT_SECURE_NO_WARNINGS. See online help for details.
+C:\Users\74093\AppData\Local\gitkraken\app-7.1.0\easytcp\hpp\Memory.hpp(103,21): warning C4018:  “<”: 有符号/无符号不匹配
+C:\Users\74093\AppData\Local\gitkraken\app-7.1.0\easytcp\hpp\TimeCount.hpp(29,24): warning C4244:  “return”: 从“double”转换到“time_t”，可能丢失数据
+C:\Users\74093\AppData\Local\gitkraken\app-7.1.0\easytcp\hpp\Message.hpp(27,1): warning C4996:  'strcpy': This function or variable may be unsafe. Consider using strcpy_s instead. To disable deprecation, use _CRT_SECURE_NO_WARNINGS. See online help for details.
 C:\Program Files (x86)\Windows Kits\10\Include\10.0.18362.0\ucrt\string.h(133): message :  参见“strcpy”的声明
 C:\Users\74093\AppData\Local\gitkraken\app-7.1.0\easytcp\Client\Client.cpp(9,1): warning C4996:  'scanf': This function or variable may be unsafe. Consider using scanf_s instead. To disable deprecation, use _CRT_SECURE_NO_WARNINGS. See online help for details.
 C:\Program Files (x86)\Windows Kits\10\Include\10.0.18362.0\ucrt\stdio.h(1274): message :  参见“scanf”的声明
-  正在生成代码
-  Previous IPDB not found, fall back to full compilation.
-  All 99 functions were compiled because no usable IPDB/IOBJ from previous compilation was found.
-  已完成代码的生成
-  Client.vcxproj -> C:\Users\74093\AppData\Local\gitkraken\app-7.1.0\easytcp\/bin/Release\Client.exe
+  Client.vcxproj -> C:\Users\74093\AppData\Local\gitkraken\app-7.1.0\easytcp\/bin/Debug\Client.exe

@@ -26,8 +26,42 @@
 #include <thread>
 #include <mutex>
 #include <functional>
+#include <map>
 
 #pragma comment(lib, "ws2_32.lib")
+
+class ClientInServer
+{
+public:
+	static const int MAX_HEART_TIME = 10000;
+	SOCKET _sock;
+	time_t _time;
+	ClientInServer(SOCKET sock) :_sock(sock)
+	{
+		TimeReset();
+	}
+	~ClientInServer()
+	{
+	}
+
+	void TimeReset()
+	{
+		_time = 0;
+	}
+
+	bool CheckHeart(time_t dt)
+	{
+		_time += dt;
+		if (_time > MAX_HEART_TIME)
+		{
+			printf("%d\n", _time);
+			return true;
+		}
+		return false;
+	}
+private:
+
+};
 
 class CellServer :public SendAndRecieveMessage
 {
@@ -38,10 +72,12 @@ private:
 
 	int _ClientCount = 0;
 
-	std::vector<SOCKET> c_Sock;
-	std::vector<SOCKET> c_SockBuf;
+	std::vector<ClientInServer*> c_Sock;
+	std::vector<ClientInServer*> c_SockBuf;
 	std::thread* _thread;
 	std::mutex _m;
+
+	std::map<SOCKET, ClientInServer*> c_Sock_map;
 
 	fd_set _fRead;
 public:
@@ -49,6 +85,7 @@ public:
 	{
 		_ID = id;
 		_sock = sock;
+
 	}
 
 	~CellServer()
@@ -58,6 +95,7 @@ public:
 
 	void Run()
 	{
+		_oldTime.Update();
 		bool SOCKET_CHANGE = false;
 		FD_ZERO(&_fRead);
 		FD_SET(_sock, &_fRead);
@@ -78,14 +116,19 @@ public:
 				for (auto newClient : c_SockBuf)
 				{
 					c_Sock.push_back(newClient);
-					FD_SET(newClient, &_fRead);
-					if (newClient > MaxSocket) MaxSocket = newClient;
+					FD_SET(newClient->_sock, &_fRead);
+					if (newClient->_sock > MaxSocket) MaxSocket = newClient->_sock;
 				}
 				c_SockBuf.clear();
 				_m.unlock();
 			}
-			if (!c_Sock.size()) continue;
-			
+			if (!c_Sock.size())
+			{
+				_oldTime.Update();
+				continue;
+			    
+			}
+
 			fd_set fRead;
 			FD_ZERO(&fRead);
 			FD_SET(_sock, &fRead);
@@ -93,9 +136,9 @@ public:
 				for (auto Sock : c_Sock)
 				{
 
-					FD_SET(Sock, &fRead);
+					FD_SET(Sock->_sock, &fRead);
 #ifdef _WIN32
-					MaxSocket = max(MaxSocket, Sock);
+					MaxSocket = max(MaxSocket, Sock->_sock);
 #else
 					MaxSocket = std::max(MaxSocket, Sock);
 #endif
@@ -106,15 +149,6 @@ public:
 				memcpy(&fRead, &_fRead, sizeof(fd_set));
 			}
 
-			//fd_set fRead;
-
-			//FD_ZERO(&fRead);
-
-			//fRead.fd_count = _fRead.fd_count;
-			//for (int i = 0; i < fRead.fd_count; i++)
-			//{
-			//	fRead.fd_array[i] = _fRead.fd_array[i];
-			//}
 
 			SOCKET_CHANGE = false;
 			timeval Out_time;
@@ -133,10 +167,13 @@ public:
 				if (-1 == Accept(fRead.fd_array[i]))
 				{
 					printf("client exit : Socket = %d ...\n", fRead.fd_array[i]);
-					auto iter = std::find(c_Sock.begin(), c_Sock.end(), fRead.fd_array[i]);
+					auto client = c_Sock_map[fRead.fd_array[i]];
+					auto iter = std::find(c_Sock.begin(), c_Sock.end(), client);
 					if (iter != c_Sock.end())
 					{
 						c_Sock.erase(iter);
+						c_Sock_map.erase(fRead.fd_array[i]);
+						delete client;
 						SOCKET_CHANGE = true;
 					}
 				}
@@ -147,22 +184,45 @@ public:
 
 
 #else
-			for (auto i : c_Sock)
+			for (auto it = c_Sock.begin(); it != c_Sock.end();)
 			{
-				if (FD_ISSET(i,&fRead) && -1 == Accept(i))
+				auto i = (*it)->_sock;
+				if (FD_ISSET(i, &fRead) && -1 == Accept(i))
 				{
 					printf("client exit : Socket = %d ...\n", i);
 					SOCKET_CHANGE = true;
-					for (auto iter = c_Sock.begin(); iter != c_Sock.end(); iter++)
-					{
-						if (i == *iter) c_Sock.erase(iter);
-						break;
-					}
+					ClientInServer cis = *it;
 
+					it = c_Sock.erase(it);
+					c_Sock_map.erase(i);
+					delete cis;
 				}
+				else it++;
 			}
 #endif
+			SOCKET_CHANGE = CheckHeart();
 		}
+	}
+	TimeCount _oldTime;
+	bool CheckHeart()
+	{
+		time_t dt = _oldTime.getMillSec();
+		bool SOCKET_CHANGE = false;
+		for (auto it = c_Sock.begin(); it != c_Sock.end();)
+		{
+			auto i = *it;
+			if (i->CheckHeart(dt))
+			{
+				printf("client exit : Socket = %d ...\n", i->_sock);
+				SOCKET_CHANGE = true;
+				it = c_Sock.erase(it);
+				c_Sock_map.erase(i->_sock);
+				delete i;
+			}
+			else it++;
+		}
+		_oldTime.Update();
+		return SOCKET_CHANGE;
 	}
 
 	bool isRun()
@@ -176,10 +236,7 @@ public:
 		int nlen = Recieve(cSock);
 		if (nlen > 0)
 		{
-			//if (!strcmp(recvBuf, "")) return 0;
-			// char msgBuf1[] = "send message success!";
-
-			// Send(cSock, msgBuf1);
+			c_Sock_map[cSock]->TimeReset();
 			return 0;
 		}
 		else return -1;
@@ -231,7 +288,8 @@ public:
 	{
 		_m.lock();
 		_ClientCount++;
-		c_SockBuf.push_back(csock);
+		c_Sock_map[csock] = new ClientInServer(csock);
+		c_SockBuf.push_back(c_Sock_map[csock]);
 		_m.unlock();
 	}
 

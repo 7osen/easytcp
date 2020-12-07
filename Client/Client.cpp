@@ -39,14 +39,15 @@ void sendThread(int id)
 		for (int i = begin; i < end; i++)
 		if (csock[i] != nullptr)
 		{ 
-			if (csock[i]->isRun()) csock[i]->Send((char*)"1");
+			if (csock[i]->isRun()) csock[i]->Send((char*)"2");
 			else
 			{
 				printf("Client = %d error... \n ", i);
 			//	CsockPoll->RetrunObject(csock[i]);
 				csock[i] = nullptr;
-				
+			     	
 			}
+			//Sleep(100);
 		}
 	}
 }

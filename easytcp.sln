@@ -7,6 +7,13 @@ Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "Server", "Server\Server.vcx
 EndProject
 Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "Client", "Client\Client.vcxproj", "{017D9588-D8EF-463B-8132-BA0A29491180}"
 EndProject
+Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Solution Items", "Solution Items", "{577BE232-7DBA-4CAF-A7A0-3750FDDB8053}"
+	ProjectSection(SolutionItems) = preProject
+		hpp\Memory.hpp = hpp\Memory.hpp
+		hpp\Message.hpp = hpp\Message.hpp
+		hpp\TimeCount.hpp = hpp\TimeCount.hpp
+	EndProjectSection
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|x64 = Debug|x64
