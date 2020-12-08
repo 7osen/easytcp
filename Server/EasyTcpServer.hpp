@@ -5,7 +5,6 @@
 
 
 #ifdef _WIN32
-#define FD_SETSIZE 4096
 #include <Windows.h>
 #include <WinSock2.h>
 #else
@@ -152,8 +151,8 @@ public:
 
 			SOCKET_CHANGE = false;
 			timeval Out_time;
-			Out_time.tv_sec = 1;
-			Out_time.tv_usec = 0;
+			Out_time.tv_sec = 0;
+			Out_time.tv_usec = 100000;
 			int ret = select(MaxSocket + 1, &fRead, nullptr, nullptr, &Out_time);
 			if (ret <= 0)
 			{
@@ -233,52 +232,24 @@ public:
 	int Accept(SOCKET cSock)
 	{
 
-		int nlen = Recieve(cSock);
-		if (nlen > 0)
+		int ret = Recieve(cSock);
+		if (ret != -1)
 		{
 			c_Sock_map[cSock]->TimeReset();
+			if (ret == CMD::HEART)
+			{
+				SendHeart(cSock);
+			}
 			return 0;
 		}
 		else return -1;
-	}
-
-	int Recieve(SOCKET cSock)
-	{
-		char recvmsg[256] = {};
-		int nlen = recv(cSock, MsgBuf, MsgBufSize, 0);
-		if (nlen > 0)
-		{
-
-			
-			memcpy(_MsgBuf + _Lastpos, MsgBuf, nlen);
-			_Lastpos += nlen;
-			while (_Lastpos >= sizeof(DataHeader))
-			{
-				DataHeader* header = (DataHeader*)_MsgBuf;
-				if (_Lastpos >= header->HeaderLength)
-				{
-					_recvCount++;
-					memcpy(recvmsg, _MsgBuf + sizeof(DataHeader), header->DataLength);
-					//printf("receive message from client <SOCKET = %d>: %s\n", cSock, recvmsg);
-					int leftnum = _Lastpos - header->HeaderLength;
-					memcpy(_MsgBuf, _MsgBuf + header->HeaderLength, leftnum);
-					_Lastpos = leftnum;
-				}
-				else break;
-			}
-			return nlen;
-		}
-		else
-		{
-			return -1;
-		}
-		return nlen;
 	}
 
 	void Close()
 	{
 		_sock = INVALID_SOCKET;
 	}
+
 	int getCount()
 	{
 		return _ClientCount;

@@ -17,6 +17,8 @@
 
 #include <stdio.h>
 #include <thread>
+#include <functional>
+#include <mutex>
 #include "Memory.hpp"
 #include "Message.hpp"
 
@@ -25,7 +27,18 @@
 class EasyTcpClient:public SendAndRecieveMessage
 {
 private:
+	static const int MAX_HEART_TIME = 5000;
+	static const int SEND_BUF_SIZE = 4096;
+	static const int SEND_BUF_TIME = 200;
 	SOCKET _sock = INVALID_SOCKET;
+	std::thread* _thread;
+	TimeCount _heart_time;
+	std::mutex _heart_time_mutex;
+	
+	char _sendBuf[SEND_BUF_SIZE] = {};
+	int _sendBufLen = 0;
+	TimeCount _send_time;
+	std::mutex _send_mutex;
 public:
 	EasyTcpClient()
 	{
@@ -100,49 +113,132 @@ public:
 		return _sock != INVALID_SOCKET;
 	}
     
+	void Send(SOCKET csock,char* msg)
+	{
+		//SendAndRecieveMessage::Send(_sock, msg);
+		if (_sendBufLen + sizeof(DataBody) >= SEND_BUF_SIZE) OntimeSend();
+
+		_send_mutex.lock();
+		DataBody data = DataBody(msg);
+		memcpy(_sendBuf + _sendBufLen, (char*)& data, sizeof(DataBody));
+		_sendBufLen += sizeof(DataBody);
+		_send_mutex.unlock();
+
+		_heart_time_mutex.lock();
+		_heart_time.Update();
+		_heart_time_mutex.unlock();
+	}
+
 	void Send(char* msg)
 	{
-		SendAndRecieveMessage::Send(_sock, msg);
+		//SendAndRecieveMessage::Send(_sock, msg);
+		if (_sendBufLen + sizeof(DataBody) >= SEND_BUF_SIZE) OntimeSend();
+
+		_send_mutex.lock();
+
+		DataBody data = DataBody(msg);
+		memcpy(_sendBuf + _sendBufLen, (char*) &data, sizeof(DataBody));
+		_sendBufLen += sizeof(DataBody);
+		_send_mutex.unlock();
+
+		_heart_time_mutex.lock();
+		_heart_time.Update();
+		_heart_time_mutex.unlock();
+	}
+
+	void SendHeart(SOCKET csock)
+	{
+		//SendAndRecieveMessage::Send(_sock, msg);
+		if (_sendBufLen + sizeof(HeartBody) >= SEND_BUF_SIZE) OntimeSend();
+
+		_send_mutex.lock();
+
+		HeartBody data = HeartBody();
+		memcpy(_sendBuf + _sendBufLen, (char*)& data, sizeof(HeartBody));
+		_sendBufLen += sizeof(HeartBody);
+		_send_mutex.unlock();
+
+		_heart_time.Update();
+	}
+
+	void OntimeSend()
+	{
+
+		_send_mutex.lock();
+
+		send(_sock, _sendBuf, _sendBufLen, 0);
+		_sendBufLen = 0;
+		_send_time.Update();
+		
+		_send_mutex.unlock();
+
 	}
 
 	void Run()
 	{
-
 		if (INVALID_SOCKET == _sock) Init();
-		
+		_send_time.Update();
+		_heart_time.Update();
+		while (isRun())
 		{
+			if (_send_time.getMillSec() >= SEND_BUF_TIME)
+			{
+				OntimeSend();
+			}
+			if (_recvCount)
+			{
+				double t = _timeC.getSecond();
+				if (t >= 1.0)
+				{
+					printf("Client = %d,time <%lf>, recieve  = <%d> message ...\n",  _sock, t, _recvCount);
+					_recvCount = 0;
+					_timeC.Update();
+				}
+			}
 			fd_set fRead;
-			fd_set fWrite;
-			fd_set fExp;
 
 			FD_ZERO(&fRead);
-			FD_ZERO(&fWrite);
-			FD_ZERO(&fExp);
 
 			FD_SET(_sock, &fRead);
-			FD_SET(_sock, &fWrite);
-			FD_SET(_sock, &fExp);
-			int ret = select(_sock + 1, &fRead, &fWrite, &fExp, NULL);
-			if (ret < 0)
-			{
-				printf("select end...\n");
-			}
+
+			CheckHeart();
+
+			timeval Out_time;
+			Out_time.tv_sec = 0;
+			Out_time.tv_usec = 100000;
+			int ret = select(_sock + 1, &fRead, nullptr, nullptr, &Out_time);
+			if (ret == 0) continue;
+			if (ret < 0) Close();
 			if (FD_ISSET(_sock, &fRead))
 			{
-				char recvBuf[256] = "";
-				if (-1 == Recieve(_sock,recvBuf))
+				if (-1 == Recieve(_sock))
 				{
 					printf("connect break...");
 					Close();
-				}
-				else if (strcmp(recvBuf, ""))
-				{
-					printf("%s \n", recvBuf);
-				}
+				}	
 			}
 		}
 	}
 
+
+
+	bool CheckHeart()
+	{
+		_heart_time_mutex.lock();
+		time_t last_time  = _heart_time.getMillSec();
+		if (last_time > MAX_HEART_TIME)
+		{
+			SendHeart(_sock);
+			_heart_time.Update();
+		}
+		_heart_time_mutex.unlock();
+		return false;
+	}
+
+	void Start()
+	{
+		_thread = new std::thread(std::mem_fun(&EasyTcpClient::Run), this);
+	}
 	
 };
 
