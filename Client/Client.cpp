@@ -19,7 +19,7 @@ void cmdThread(EasyTcpClient* etc)
 		}
 	}
 }
-const int N = 1;
+const int N = 50;
 EasyTcpClient* csock[4*N];
 //ObjectPool<EasyTcpClient>* CsockPoll;
 void sendThread(int id)
@@ -32,8 +32,8 @@ void sendThread(int id)
 		csock[i]->Init();
 	//	csock[i]->Connect((char*)"192.168.17.130", 3456);
 		csock[i]->Connect((char*)"10.5.179.40", 3456);
-		csock[i]->Send((char*)"1");
 		csock[i]->Start();
+		csock[i]->Send((char*)"1");
 	}
 	return;
 	for (;;)

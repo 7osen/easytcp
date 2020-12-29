@@ -1,13 +1,8 @@
-﻿C:\Program Files (x86)\Microsoft Visual Studio\2019\Community\MSBuild\Microsoft\VC\v160\Microsoft.CppBuild.targets(437,5): warning MSB8004: Intermediate Directory does not end with a trailing slash.  This build instance will add the slash as it is required to allow proper evaluation of the Intermediate Directory.
-C:\Program Files (x86)\Microsoft Visual Studio\2019\Community\MSBuild\Microsoft\VC\v160\Microsoft.CppBuild.targets(438,5): warning MSB8004: Output Directory does not end with a trailing slash.  This build instance will add the slash as it is required to allow proper evaluation of the Output Directory.
+﻿C:\Program Files (x86)\Microsoft Visual Studio\2019\Community\MSBuild\Microsoft\VC\v160\Microsoft.CppBuild.targets(476,5): warning MSB8004: Intermediate 目录未以斜杠结尾。  此生成实例将添加斜杠，因为必须有这个斜杠才能正确计算 Intermediate 目录。
+C:\Program Files (x86)\Microsoft Visual Studio\2019\Community\MSBuild\Microsoft\VC\v160\Microsoft.CppBuild.targets(477,5): warning MSB8004: Output 目录未以斜杠结尾。  此生成实例将添加斜杠，因为必须有这个斜杠才能正确计算 Output 目录。
   Server.cpp
-C:\Users\74093\AppData\Local\gitkraken\app-7.1.0\easytcp\hpp\Memory.hpp(103,21): warning C4018:  “<”: 有符号/无符号不匹配
-C:\Users\74093\AppData\Local\gitkraken\app-7.1.0\easytcp\hpp\TimeCount.hpp(29,24): warning C4244:  “return”: 从“double”转换到“time_t”，可能丢失数据
-C:\Users\74093\AppData\Local\gitkraken\app-7.1.0\easytcp\hpp\Message.hpp(38,1): warning C4996:  'strcpy': This function or variable may be unsafe. Consider using strcpy_s instead. To disable deprecation, use _CRT_SECURE_NO_WARNINGS. See online help for details.
-C:\Program Files (x86)\Windows Kits\10\Include\10.0.18362.0\ucrt\string.h(133): message :  参见“strcpy”的声明
-C:\Users\74093\AppData\Local\gitkraken\app-7.1.0\easytcp\Server\EasyTcpServer.hpp(56,11): warning C4477:  “printf”: 格式字符串“%d”需要类型“int”的参数，但可变参数 1 拥有了类型“time_t”
-C:\Users\74093\AppData\Local\gitkraken\app-7.1.0\easytcp\Server\EasyTcpServer.hpp(56,11): message :  请考虑在格式字符串中使用“%lld”
-C:\Users\74093\AppData\Local\gitkraken\app-7.1.0\easytcp\Server\EasyTcpServer.hpp(56,11): message :  请考虑在格式字符串中使用“%I64d”
-C:\Users\74093\AppData\Local\gitkraken\app-7.1.0\easytcp\Server\Server.cpp(8,1): warning C4996:  'scanf': This function or variable may be unsafe. Consider using scanf_s instead. To disable deprecation, use _CRT_SECURE_NO_WARNINGS. See online help for details.
-C:\Program Files (x86)\Windows Kits\10\Include\10.0.18362.0\ucrt\stdio.h(1274): message :  参见“scanf”的声明
-  Server.vcxproj -> C:\Users\74093\AppData\Local\gitkraken\app-7.1.0\easytcp\/bin/Debug\Server.exe
+C:\Users\74093\AppData\Local\gitkraken\app-7.1.0\easytcp\hpp\Memory.hpp(105,21): warning C4018: “<”: 有符号/无符号不匹配
+C:\Users\74093\AppData\Local\gitkraken\app-7.1.0\easytcp\hpp\TimeCount.hpp(29,24): warning C4244: “return”: 从“double”转换到“time_t”，可能丢失数据
+C:\Users\74093\AppData\Local\gitkraken\app-7.1.0\easytcp\hpp\Message.hpp(40,3): warning C4996: 'strcpy': This function or variable may be unsafe. Consider using strcpy_s instead. To disable deprecation, use _CRT_SECURE_NO_WARNINGS. See online help for details.
+C:\Users\74093\AppData\Local\gitkraken\app-7.1.0\easytcp\Server\Server.cpp(8,3): warning C4996: 'scanf': This function or variable may be unsafe. Consider using scanf_s instead. To disable deprecation, use _CRT_SECURE_NO_WARNINGS. See online help for details.
+  Server.vcxproj -> C:\Users\74093\AppData\Local\gitkraken\app-7.1.0\easytcp\bin\Debug\Server.exe

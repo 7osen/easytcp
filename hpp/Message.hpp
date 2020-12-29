@@ -2,8 +2,10 @@
 #define _Message_hpp_
 #include <string>
 #include "TimeCount.hpp"
-#include <Windows.h>
-#include <WinSock2.h>
+#ifdef __WIN32
+	#include <Windows.h>
+	#include <WinSock2.h>
+#endif
 
 enum CMD
 {
@@ -53,18 +55,20 @@ struct HeartBody :public DataHeader
 class SendAndRecieveMessage
 {
 protected:
-	TimeCount _timeC;
-	int _recvCount = 0;
-	int _Lastpos = 0;
+
 
 	const static int  MsgBufSize = 4096;
 	char _MsgBuf[MsgBufSize] = {};//second
 	char MsgBuf[MsgBufSize] = {};//first
+	TimeCount _timeC;
+	int _recvCount = 0;
+	int _Lastpos = 0;
 public:
 	SendAndRecieveMessage()
 	{
 		_timeC.Update();
 	}
+
 	virtual ~SendAndRecieveMessage()
 	{
 

@@ -25,7 +25,7 @@ int main()
 	ets.Start();
 	std::thread cmdt(cmdThread, &ets);
 	cmdt.detach();
-	while (ets.isRun()) ets.Run();
+	ets.Run();
 	ets.Close();
 	return 0;
 }

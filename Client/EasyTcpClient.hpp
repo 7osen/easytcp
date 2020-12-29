@@ -24,40 +24,48 @@
 
 
 #pragma comment(lib, "ws2_32.lib")
-class EasyTcpClient:public SendAndRecieveMessage
+class EasyTcpClient
 {
 private:
 	static const int MAX_HEART_TIME = 5000;
 	static const int SEND_BUF_SIZE = 4096;
 	static const int SEND_BUF_TIME = 200;
-	SOCKET _sock = INVALID_SOCKET;
-	std::thread* _thread;
-	TimeCount _heart_time;
-	std::mutex _heart_time_mutex;
-	
+
+	const static int  MsgBufSize = 4096;
+	char _MsgBuf[MsgBufSize] = {};//second
+	char MsgBuf[MsgBufSize] = {};//first
+
 	char _sendBuf[SEND_BUF_SIZE] = {};
-	int _sendBufLen = 0;
+	std::thread* _thread;
 	TimeCount _send_time;
+	TimeCount _heart_time;
+	TimeCount _timeC;
+
+	std::mutex _heart_time_mutex;
 	std::mutex _send_mutex;
+	SOCKET _sock = INVALID_SOCKET;
+	int _recvCount = 0;
+	int _Lastpos = 0;
+	int _sendBufLen = 0;
 public:
 	EasyTcpClient()
 	{
 	}
 
-	~EasyTcpClient()
+	virtual ~EasyTcpClient()
 	{
 		Close();
 	}
 
 	void Init()
 	{
-		//windows socket 2.x »·¾³
+		//windows socket 2.x ï¿½ï¿½ï¿½ï¿½
 #ifdef _WIN32
 		WORD ver = MAKEWORD(2, 2);
 		WSADATA dat;
 		WSAStartup(ver, &dat);
 #endif
-		//½¨Á¢socket
+		//ï¿½ï¿½ï¿½ï¿½socket
 		if (_sock != INVALID_SOCKET) Close();
 		_sock = socket(AF_INET, SOCK_STREAM, IPPROTO_TCP);
 		if (SOCKET_ERROR == _sock)
@@ -99,7 +107,9 @@ public:
 	{
 		if (_sock != INVALID_SOCKET)
 		{
+#ifdef _WIN32
 			closesocket(_sock);
+#endif
 			printf("SOCKET = %d Client Close...\n", _sock);
 		}
 		_sock = INVALID_SOCKET;
@@ -174,11 +184,52 @@ public:
 
 	}
 
+	int Recieve(SOCKET cSock)
+	{
+		char recvmsg[256] = {};
+		int nlen = recv(cSock, MsgBuf, MsgBufSize, 0);
+		int ret = -1;
+		if (nlen > 0)
+		{
+			ret = CMD::MESSAGE;
+			memcpy(_MsgBuf + _Lastpos, MsgBuf, nlen);
+			_Lastpos += nlen;
+			while (_Lastpos >= sizeof(DataHeader))
+			{
+				DataHeader* header = (DataHeader*)_MsgBuf;
+				if (_Lastpos >= header->HeaderLength)
+				{
+					_recvCount++;
+					if (header->_cmd == CMD::MESSAGE)
+					{
+						memcpy(recvmsg, _MsgBuf + sizeof(DataHeader), header->DataLength);
+						//		printf("receive message from client <SOCKET = %d>: %s\n", cSock, recvmsg);
+					}
+					else if (header->_cmd == CMD::HEART)
+					{
+						ret = CMD::HEART;
+					}
+					int leftnum = _Lastpos - header->HeaderLength;
+					memcpy(_MsgBuf, _MsgBuf + header->HeaderLength, leftnum);
+					_Lastpos = leftnum;
+				}
+				else break;
+			}
+			return ret;
+		}
+		else
+		{
+			return -1;
+		}
+		return ret;
+	}
+
 	void Run()
 	{
 		if (INVALID_SOCKET == _sock) Init();
 		_send_time.Update();
 		_heart_time.Update();
+		_timeC.Update();
 		while (isRun())
 		{
 			if (_send_time.getMillSec() >= SEND_BUF_TIME)
@@ -213,7 +264,7 @@ public:
 			{
 				if (-1 == Recieve(_sock))
 				{
-					printf("connect break...");
+					printf("connect break...\n");
 					Close();
 				}	
 			}
@@ -225,7 +276,7 @@ public:
 	bool CheckHeart()
 	{
 		_heart_time_mutex.lock();
-		time_t last_time  = _heart_time.getMillSec();
+		int last_time  = _heart_time.getMillSec();
 		if (last_time > MAX_HEART_TIME)
 		{
 			SendHeart(_sock);

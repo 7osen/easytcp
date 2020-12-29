@@ -10,10 +10,10 @@ class MemoryPool;
 class MemoryBlock
 {
 public:
+	bool _inPool;
 	MemoryBlock* _next;
 	MemoryPool* _alloc;
 	int _ref;
-	bool _inPool;
 	MemoryBlock()
 	{
 
@@ -31,14 +31,16 @@ private:
 class MemoryPool
 {
 protected:
+	std::mutex _mutex;
+	
 	char* _pThis;
 	MemoryBlock* _pHead;
 	size_t _BlockSize;
 	size_t _BlockNum;
-	std::mutex _mutex;
 public:
 	MemoryPool()
 	{
+
 		_pHead = nullptr;
 		_pThis = nullptr;
 		_BlockSize = 0;
@@ -157,12 +159,12 @@ private:
 
 	}
 	static const size_t MaxmemSize = 10240;
-	MemoryPoolt<4, 5000> memp4;
-	MemoryPoolt<8, 5000> memp8;
-	MemoryPoolt<16, 2500> memp16;
-	MemoryPoolt<32, 1200> memp32;
-	MemoryPoolt<1024, 1000> memp1024;
 	MemoryPoolt<10240, 1000> memp10240;
+	MemoryPoolt<1024, 1000> memp1024;
+	MemoryPoolt<32, 1200> memp32;
+	MemoryPoolt<16, 2500> memp16;
+	MemoryPoolt<8, 5000> memp8;
+	MemoryPoolt<4, 5000> memp4;
 
 	MemoryPool* _map[MaxmemSize + 1];
 
@@ -285,9 +287,9 @@ public:
 	}
 
 private:
-	int _size;
 	std::list<Type*> _list;
 	std::mutex _m;
+	int _size;
 };
 
 #endif // !_Memory_hpp_
