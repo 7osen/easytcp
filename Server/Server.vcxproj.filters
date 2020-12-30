@@ -23,7 +23,7 @@
     <ClInclude Include="EasyTcpServer.hpp">
       <Filter>头文件</Filter>
     </ClInclude>
-    <ClInclude Include="..\Client\CellServer.hpp">
+    <ClInclude Include="CellServer.hpp">
       <Filter>头文件</Filter>
     </ClInclude>
   </ItemGroup>

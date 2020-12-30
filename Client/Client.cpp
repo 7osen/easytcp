@@ -32,10 +32,9 @@ void sendThread(int id)
 		csock[i]->Init();
 	//	csock[i]->Connect((char*)"192.168.17.130", 3456);
 		csock[i]->Connect((char*)"10.5.179.40", 3456);
-		csock[i]->Start();
 		csock[i]->Send((char*)"1");
+		csock[i]->Start();
 	}
-	return;
 	for (;;)
 	{
 		for (int i = begin; i < end; i++)
@@ -49,8 +48,8 @@ void sendThread(int id)
 				csock[i] = nullptr;
 			     	
 			}
-			//Sleep(100);
 		}
+		//Sleep(1000);
 	}
 }
 int main()

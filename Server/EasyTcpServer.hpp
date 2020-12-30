@@ -48,7 +48,7 @@ public:
 
 	virtual ~EasyTcpServer()
 	{
-
+		Close();
 	}
 
 	void init()
@@ -182,6 +182,11 @@ public:
 #endif
 		}
 		_sock = INVALID_SOCKET;
+		for (auto server : _Servers)
+		{
+			server->Close();
+			delete server;
+		}
 	}
 
 

@@ -32,10 +32,11 @@
 
 class ClientInServer
 {
-public:
+private:
 	static const int MAX_HEART_TIME = 10000;
+	int _time;
+public:
 	SOCKET _sock;
-	time_t _time;
 	ClientInServer(SOCKET sock) :_sock(sock)
 	{
 		TimeReset();
@@ -49,12 +50,11 @@ public:
 		_time = 0;
 	}
 
-	bool CheckHeart(time_t dt)
+	bool CheckHeart(int dt)
 	{
 		_time += dt;
 		if (_time > MAX_HEART_TIME)
 		{
-			printf("%d\n", (int)_time);
 			return true;
 		}
 		return false;
@@ -63,10 +63,13 @@ private:
 
 };
 
-class CellServer :public SendAndRecieveMessage
+class CellServer 
 {
 private:
 
+	const static int  MsgBufSize = 4096;
+	char _MsgBuf[MsgBufSize] = {};//second
+	char MsgBuf[MsgBufSize] = {};//first
 	std::map<SOCKET, ClientInServer*> c_Sock_map;
 
 	std::vector<ClientInServer*> c_Sock;
@@ -75,10 +78,13 @@ private:
 	fd_set _fRead;
 	std::mutex _m;
 	TimeCount _oldTime;
-	int _ID;
+	TimeCount _timeC;
 	SOCKET _sock = INVALID_SOCKET;
-	int _ClientCount = 0;
 	std::thread* _thread;
+	int _recvCount = 0;
+	int _Lastpos = 0;
+	int _ID;
+	int _ClientCount = 0;
 
 public:
 	CellServer(int id, SOCKET sock = INVALID_SOCKET)
@@ -100,6 +106,7 @@ public:
 		FD_ZERO(&_fRead);
 		FD_SET(_sock, &_fRead);
 		SOCKET MaxSocket = _sock;
+		_timeC.Update();
 		while (isRun())
 		{
 			double t = _timeC.getSecond();
@@ -155,6 +162,7 @@ public:
 			Out_time.tv_sec = 0;
 			Out_time.tv_usec = 100000;
 			int ret = select(MaxSocket + 1, &fRead, nullptr, nullptr, &Out_time);
+			SOCKET_CHANGE = CheckHeart();
 			if (ret <= 0)
 			{
 				continue;
@@ -166,7 +174,7 @@ public:
 			{
 				if (-1 == Accept(fRead.fd_array[i]))
 				{
-					printf("client exit : Socket = %d ...\n", fRead.fd_array[i]);
+					//printf("client exit : Socket = %d ...\n", fRead.fd_array[i]);
 					auto client = c_Sock_map[fRead.fd_array[i]];
 					auto iter = std::find(c_Sock.begin(), c_Sock.end(), client);
 					if (iter != c_Sock.end())
@@ -189,7 +197,7 @@ public:
 				auto i = (*it)->_sock;
 				if (FD_ISSET(i, &fRead) && -1 == Accept(i))
 				{
-					printf("client exit : Socket = %d ...\n", i);
+					//printf("client exit : Socket = %d ...\n", i);
 					SOCKET_CHANGE = true;
 					ClientInServer* cis = *it;
 
@@ -200,19 +208,19 @@ public:
 				else it++;
 			}
 #endif
-			SOCKET_CHANGE = CheckHeart();
+
 		}
 	}
 	bool CheckHeart()
 	{
-		time_t dt = _oldTime.getMillSec();
+		int dt = _oldTime.getMillSec();
 		bool SOCKET_CHANGE = false;
 		for (auto it = c_Sock.begin(); it != c_Sock.end();)
 		{
 			auto i = *it;
 			if (i->CheckHeart(dt))
 			{
-				printf("client exit : Socket = %d ...\n", (int)i->_sock);
+				//printf("client exit : Socket = %d ...\n", (int)i->_sock);
 				SOCKET_CHANGE = true;
 				it = c_Sock.erase(it);
 				c_Sock_map.erase(i->_sock);
@@ -227,6 +235,52 @@ public:
 	bool isRun()
 	{
 		return _sock != INVALID_SOCKET;
+	}
+
+	int Recieve(SOCKET cSock)
+	{
+		char recvmsg[256] = {};
+		int nlen = recv(cSock, MsgBuf, MsgBufSize, 0);
+		int ret = -1;
+		if (nlen > 0)
+		{
+			ret = CMD::MESSAGE;
+			memcpy(_MsgBuf + _Lastpos, MsgBuf, nlen);
+			_Lastpos += nlen;
+			while (_Lastpos >= sizeof(DataHeader))
+			{
+				DataHeader* header = (DataHeader*)_MsgBuf;
+				if (_Lastpos >= header->HeaderLength)
+				{
+					_recvCount++;
+					if (header->_cmd == CMD::MESSAGE)
+					{
+						memcpy(recvmsg, _MsgBuf + sizeof(DataHeader), header->DataLength);
+						//		printf("receive message from client <SOCKET = %d>: %s\n", cSock, recvmsg);
+					}
+					else if (header->_cmd == CMD::HEART)
+					{
+						ret = CMD::HEART;
+					}
+					int leftnum = _Lastpos - header->HeaderLength;
+					memcpy(_MsgBuf, _MsgBuf + header->HeaderLength, leftnum);
+					_Lastpos = leftnum;
+				}
+				else break;
+			}
+			return ret;
+		}
+		else
+		{
+			return -1;
+		}
+		return ret;
+	}
+
+	void SendHeart(SOCKET cSock)
+	{
+		HeartBody data = HeartBody();
+		int res = send(cSock, (char*)&data, sizeof(data), 0);
 	}
 
 	int Accept(SOCKET cSock)
