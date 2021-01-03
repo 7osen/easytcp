@@ -21,10 +21,11 @@
 #include <mutex>
 #include "Memory.hpp"
 #include "Message.hpp"
+#include "CELLSemaphore.hpp"
 
 
 #pragma comment(lib, "ws2_32.lib")
-class EasyTcpClient
+class EasyTcpClient:public CellSemaphore
 {
 private:
 	static const int MAX_HEART_TIME = 5000;
@@ -107,19 +108,17 @@ public:
 	{
 		if (_sock != INVALID_SOCKET)
 		{
+			_sock = INVALID_SOCKET;
 #ifdef _WIN32
 			closesocket(_sock);
 #endif
+			Wait();
 			printf("SOCKET = %d Client Close...\n", _sock);
 		}
-		_sock = INVALID_SOCKET;
 	}
 	
 	bool isRun()
 	{
-		if (_sock != INVALID_SOCKET)
-			return _sock != INVALID_SOCKET;
-		else printf("SOCKET = %d exit...\n", _sock);
 		return _sock != INVALID_SOCKET;
 	}
     
@@ -269,6 +268,7 @@ public:
 				}	
 			}
 		}
+		Wakeup();
 	}
 
 

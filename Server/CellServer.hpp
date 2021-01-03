@@ -20,6 +20,7 @@
 #include "Memory.hpp"
 #include "Message.hpp"
 #include "TimeCount.hpp"
+#include "CELLSemaphore.hpp"
 
 #include <stdio.h>
 #include <vector>
@@ -63,7 +64,7 @@ private:
 
 };
 
-class CellServer 
+class CellServer:public CellSemaphore
 {
 private:
 
@@ -83,10 +84,10 @@ private:
 	std::thread* _thread;
 	int _recvCount = 0;
 	int _Lastpos = 0;
-	int _ID;
 	int _ClientCount = 0;
 
 public:
+	int _ID;
 	CellServer(int id, SOCKET sock = INVALID_SOCKET)
 	{
 		_ID = id;
@@ -96,7 +97,7 @@ public:
 
 	virtual ~CellServer()
 	{
-
+		Close();
 	}
 
 	void Run()
@@ -210,6 +211,8 @@ public:
 #endif
 
 		}
+		printf("CellServer <%d> Run end.. \n", _ID);
+		Wakeup();
 	}
 	bool CheckHeart()
 	{
@@ -301,7 +304,13 @@ public:
 
 	void Close()
 	{
-		_sock = INVALID_SOCKET;
+		if (_sock != INVALID_SOCKET)
+		{
+			printf("CellServer <%d> close begin..\n", _ID);
+			_sock = INVALID_SOCKET;
+			Wait();
+			printf("CellServer <%d> close..\n",_ID);
+		}
 	}
 
 	int getCount()

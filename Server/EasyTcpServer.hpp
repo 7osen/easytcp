@@ -126,8 +126,8 @@ public:
 		for (int i = 0; i < _ServerThreadCount; i++)
 		{
 			CellServer* server = new CellServer(i + 1, _sock);
-			server->Start();
 			_Servers.push_back(server);
+			server->Start();
 		}
 	}
 
@@ -143,7 +143,7 @@ public:
 #else
 			_cSock = accept(_sock, (sockaddr*)&clientAddr, (socklen_t*)&nAddrLen);
 #endif
-			if (INVALID_SOCKET == _cSock)
+			if (INVALID_SOCKET == _cSock && isRun())
 			{
 				printf("client connect error!\n");
 			}
@@ -174,18 +174,20 @@ public:
 	{
 		if (_sock != INVALID_SOCKET)
 		{
+			_sock = INVALID_SOCKET;
 #ifdef _WIN32
 			closesocket(_sock);
 			WSACleanup();
 #else 
 			close(_sock);
 #endif
-		}
-		_sock = INVALID_SOCKET;
-		for (auto server : _Servers)
-		{
-			server->Close();
-			delete server;
+			for (auto server : _Servers)
+			{
+				server->Close();
+				delete server;
+			}
+
+			printf("TcpServer exit...\n");
 		}
 	}
 

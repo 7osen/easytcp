@@ -9,6 +9,7 @@ Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "Client", "Client\Client.vcx
 EndProject
 Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Solution Items", "Solution Items", "{577BE232-7DBA-4CAF-A7A0-3750FDDB8053}"
 	ProjectSection(SolutionItems) = preProject
+		hpp\CELLSemaphore.hpp = hpp\CELLSemaphore.hpp
 		hpp\Memory.hpp = hpp\Memory.hpp
 		hpp\Message.hpp = hpp\Message.hpp
 		hpp\TimeCount.hpp = hpp\TimeCount.hpp
