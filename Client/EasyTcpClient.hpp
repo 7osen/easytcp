@@ -95,7 +95,7 @@ public:
 		{
 			printf("connect error!\n");
 			Close();
-
+			return -1;
 		}
 		else
 		{
@@ -140,6 +140,7 @@ public:
 
 	void Send(char* msg)
 	{
+		
 		//SendAndRecieveMessage::Send(_sock, msg);
 		if (_sendBufLen + sizeof(DataBody) >= SEND_BUF_SIZE) OntimeSend();
 

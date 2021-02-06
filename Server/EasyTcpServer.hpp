@@ -75,6 +75,7 @@ public:
 	//Bind�󶨶˿�
 	void Bind(const char* ip, int port)
 	{
+
 		if (INVALID_SOCKET == _sock) init();
 		sockaddr_in _sin = {};
 		_sin.sin_family = AF_INET;
@@ -103,7 +104,7 @@ public:
 		}
 		else
 		{
-			printf("bind success! ip = %s ...\n", inet_ntoa(_sin.sin_addr));
+			printf("bind success! ip = %s ... port = %d \n", inet_ntoa(_sin.sin_addr), port);
 		}
 	}
 

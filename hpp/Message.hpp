@@ -18,8 +18,8 @@ using std::string;
 
 struct DataHeader
 {
-	int DataLength;
-	int HeaderLength;
+    unsigned short DataLength;
+	unsigned short HeaderLength;
 	CMD _cmd;
 	DataHeader(int length,CMD cmd)
 	{
