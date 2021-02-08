@@ -23,11 +23,12 @@ struct DataHeader
 	CMD _cmd;
 	DataHeader(int length,CMD cmd)
 	{
+		sizeof(_cmd);
+		sizeof(int);
 		HeaderLength = sizeof(DataHeader) + length;
 		DataLength = length;
 		_cmd = cmd;
 	}
-	virtual ~DataHeader(){}
 };
 
 
@@ -39,7 +40,6 @@ struct DataBody :public DataHeader
 	{
 		strcpy(data, msg);
 	}
-	virtual ~DataBody(){}
 };
 
 struct HeartBody :public DataHeader
@@ -49,7 +49,6 @@ struct HeartBody :public DataHeader
 	{
 
 	}
-	virtual ~HeartBody() {}
 };
 
 class SendAndRecieveMessage
