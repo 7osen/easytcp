@@ -23,8 +23,6 @@ struct DataHeader
 	CMD _cmd;
 	DataHeader(int length,CMD cmd)
 	{
-		sizeof(_cmd);
-		sizeof(int);
 		HeaderLength = sizeof(DataHeader) + length;
 		DataLength = length;
 		_cmd = cmd;
