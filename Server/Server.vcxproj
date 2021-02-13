@@ -142,9 +142,12 @@
     </Link>
   </ItemDefinitionGroup>
   <ItemGroup>
+    <ClCompile Include="CellSelect.hpp" />
     <ClCompile Include="Server.cpp" />
   </ItemGroup>
   <ItemGroup>
+    <ClInclude Include="Cell.hpp" />
+    <ClInclude Include="CellEpoll.hpp" />
     <ClInclude Include="CellServer.hpp" />
     <ClInclude Include="EasyTcpServer.hpp" />
   </ItemGroup>

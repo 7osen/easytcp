@@ -48,7 +48,7 @@ int main(int argc, char* args[])
 	ets.Bind(IP, port);
 	ets.Listen();
 	std::thread cmdt(cmdThread, &ets);
-	ets.Start();
+	ets.Start<CellSelect>();
 	cmdt.detach();
 	ets.Run();
 	if (ets.isRun()) ets.Close();

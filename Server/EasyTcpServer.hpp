@@ -1,34 +1,7 @@
 #ifndef _EasyTcpServer_hpp_
 #define _EasyTcpServer_hpp_
-#define WIN32_LEAN_AND_MEAN
-#define _WINSOCK_DEPRECATED_NO_WARNINGS
-
-
-#ifdef _WIN32
-#include <Windows.h>
-#include <WinSock2.h>
-#else
-#include <unistd.h>
-#include <arpa/inet.h>
-#include <string.h>
-#define SOCKET int
-#define INVALID_SOCKET  (SOCKET)(~0)
-#define SOCKET_ERROR            (-1)
-#endif
-
-#include "Memory.hpp"
-#include "Message.hpp"
-#include "TimeCount.hpp"
-#include "CellServer.hpp"
-
-#include <stdio.h>
-#include <vector>
-#include <thread>
-#include <mutex>
-#include <functional>
-#include <map>
-
-#pragma comment(lib, "ws2_32.lib")
+#include "Cell.hpp"
+#include "CellSelect.hpp"
 
 class EasyTcpServer
 {
@@ -121,12 +94,12 @@ public:
 			printf("listen success!\n");
 		}
 	}
-
+	template<typename T>
 	void Start()
 	{
 		for (int i = 0; i < _ServerThreadCount; i++)
 		{
-			CellServer* server = new CellServer(i + 1, _sock);
+			CellServer* server = new T(i + 1, _sock);
 			_Servers.push_back(server);
 			server->Start();
 		}

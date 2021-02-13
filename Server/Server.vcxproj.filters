@@ -18,12 +18,21 @@
     <ClCompile Include="Server.cpp">
       <Filter>源文件</Filter>
     </ClCompile>
+    <ClCompile Include="CellSelect.hpp">
+      <Filter>头文件</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="EasyTcpServer.hpp">
       <Filter>头文件</Filter>
     </ClInclude>
     <ClInclude Include="CellServer.hpp">
+      <Filter>头文件</Filter>
+    </ClInclude>
+    <ClInclude Include="Cell.hpp">
+      <Filter>头文件</Filter>
+    </ClInclude>
+    <ClInclude Include="CellEpoll.hpp">
       <Filter>头文件</Filter>
     </ClInclude>
   </ItemGroup>

@@ -9,7 +9,7 @@ public:
 	{
 
 	}
-	virtual ~CellSemaphore()
+	~CellSemaphore()
 	{
 
 	}
@@ -23,7 +23,7 @@ private:
 	int _wait = 0;
 
 	int _wakeup = 0;
-protected:
+public:
 	void Wait()
 	{
 		std::unique_lock<std::mutex> lock(_mutex);

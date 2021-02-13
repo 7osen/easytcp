@@ -1,35 +1,7 @@
 #ifndef  _CELL_SERVER_HPP_
 #define _CELL_SERVER_HPP_
 
-#define WIN32_LEAN_AND_MEAN
-#define _WINSOCK_DEPRECATED_NO_WARNINGS
-
-
-#ifdef _WIN32
-#include <Windows.h>
-#include <WinSock2.h>
-#else
-#include <unistd.h>
-#include <arpa/inet.h>
-#include <string.h>
-#define SOCKET int
-#define INVALID_SOCKET  (SOCKET)(~0)
-#define SOCKET_ERROR            (-1)
-#endif
-
-#include "Memory.hpp"
-#include "Message.hpp"
-#include "TimeCount.hpp"
-#include "CELLSemaphore.hpp"
-
-#include <stdio.h>
-#include <vector>
-#include <thread>
-#include <mutex>
-#include <functional>
-#include <map>
-
-#pragma comment(lib, "ws2_32.lib")
+#include "Cell.hpp"
 
 class ClientInServer
 {
@@ -64,19 +36,20 @@ private:
 
 };
 
-class CellServer:public CellSemaphore
+class CellServer
 {
-private:
+protected:
 
 	const static int  MsgBufSize = 4096;
 	char _MsgBuf[MsgBufSize] = {};//second
 	char MsgBuf[MsgBufSize] = {};//first
+	CellSemaphore _cs;
 	std::map<SOCKET, ClientInServer*> c_Sock_map;
 
+	
 	std::vector<ClientInServer*> c_Sock;
 	std::vector<ClientInServer*> c_SockBuf;
 
-	fd_set _fd;
 	std::mutex _m;
 	TimeCount _oldTime;
 	TimeCount _timeC;
@@ -101,135 +74,18 @@ public:
 		Close();
 	}
 
-	void Run()
+	void print()
 	{
-		_oldTime.Update();
-		FD_ZERO(&_fd);
-		FD_SET(_sock, &_fd);
-		SOCKET MaxSocket = _sock;
-		_timeC.Update();
-		while (isRun())
+		double t = _timeC.getSecond();
+		if (t >= 1.0)
 		{
-			double t = _timeC.getSecond();
-			if (t >= 1.0)
-			{
-				printf("Server = %d,time <%lf>, <SOCKET = %d>, Client = <%d>, recieve  = <%d> message ...\n", _ID, t, _sock, (int)c_Sock.size(), _recvCount);
-				_recvCount = 0;
-				_timeC.Update();
-			}
-
-			if (c_SockBuf.size())
-			{
-				_m.lock();
-				for (auto newClient : c_SockBuf)
-				{
-					c_Sock.push_back(newClient);
-					FD_SET(newClient->_sock, &_fd);
-					if (newClient->_sock > MaxSocket) MaxSocket = newClient->_sock;
-				}
-				c_SockBuf.clear();
-				_m.unlock();
-			}
-			if (!c_Sock.size())
-			{
-				_oldTime.Update();
-				continue;
-
-			}
-
-			fd_set fRead;
-			FD_ZERO(&fRead);
-			FD_SET(_sock, &fRead);
-
-			fd_set fWrite;
-			FD_ZERO(&fWrite);
-			FD_SET(_sock, &fWrite);
-			if (SOCKET_CHANGE)
-			{
-				for (auto Sock : c_Sock)
-				{
-
-					FD_SET(Sock->_sock, &fRead);
-#ifdef _WIN32
-					MaxSocket = max(MaxSocket, Sock->_sock);
-#else
-					MaxSocket = std::max(MaxSocket, Sock->_sock);
-#endif
-				}
-				memcpy(&_fd, &fRead, sizeof(fd_set));
-			}
-			else
-			{
-				memcpy(&fRead, &_fd, sizeof(fd_set));
-			}
-			memcpy(&fWrite, &_fd, sizeof(fd_set));
-
-			SOCKET_CHANGE = false;
-			timeval Out_time;
-			Out_time.tv_sec = 0;
-			Out_time.tv_usec = 100000;
-			int ret = select(MaxSocket + 1, &fRead, &fWrite, nullptr, &Out_time);
-			SOCKET_CHANGE = CheckHeart();
-			if (ret <= 0)
-			{
-				continue;
-			}
-			FD_CLR(_sock, &fRead);
-			RecvData(fRead);
-			WriteData(fWrite);
+			printf("Server = %d,time <%lf>, <SOCKET = %d>, Client = <%d>, recieve  = <%d> message ...\n", _ID, t, _sock, (int)c_Sock.size(), _recvCount);
+			_recvCount = 0;
+			_timeC.Update();
 		}
-		printf("CellServer <%d> Run end.. \n", _ID);
-		Wakeup();
 	}
 
-	void WriteData(fd_set fWrite)
-	{
-
-	}
-
-	void RecvData(fd_set fRead)
-	{
-
-#ifdef _WIN32
-		for (int i = 0; i < (int)fRead.fd_count; i++)
-		{
-			if (-1 == Accept(fRead.fd_array[i]))
-			{
-				//printf("client exit : Socket = %d ...\n", fRead.fd_array[i]);
-				auto client = c_Sock_map[fRead.fd_array[i]];
-				auto iter = std::find(c_Sock.begin(), c_Sock.end(), client);
-				if (iter != c_Sock.end())
-				{
-					c_Sock.erase(iter);
-					c_Sock_map.erase(fRead.fd_array[i]);
-					delete client;
-					SOCKET_CHANGE = true;
-				}
-			}
-
-		}
-
-
-
-
-#else
-		for (auto it = c_Sock.begin(); it != c_Sock.end();)
-		{
-			auto i = (*it)->_sock;
-			if (FD_ISSET(i, &fRead) && -1 == Accept(i))
-			{
-				//printf("client exit : Socket = %d ...\n", i);
-				SOCKET_CHANGE = true;
-				ClientInServer* cis = *it;
-
-				it = c_Sock.erase(it);
-				c_Sock_map.erase(i);
-				delete cis;
-				}
-			else it++;
-			}
-#endif
-	}
+	virtual void Run() = 0;
 
 	bool CheckHeart()
 	{
@@ -276,7 +132,7 @@ public:
 					if (header->_cmd == CMD::MESSAGE)
 					{
 						memcpy(recvmsg, _MsgBuf + sizeof(DataHeader), header->DataLength);
-						//		printf("receive message from client <SOCKET = %d>: %s\n", cSock, recvmsg);
+						//printf("receive message from client <SOCKET = %d>: %s\n", cSock, recvmsg);
 					}
 					else if (header->_cmd == CMD::HEART)
 					{
@@ -325,7 +181,7 @@ public:
 		{
 			printf("CellServer <%d> close begin..\n", _ID);
 			_sock = INVALID_SOCKET;
-			Wait();
+			_cs.Wait();
 			printf("CellServer <%d> close..\n",_ID);
 		}
 	}

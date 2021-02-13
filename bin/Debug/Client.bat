@@ -3,11 +3,9 @@
 
 @set port=3456
 
-@set ClientNum=40
+@set ClientNum=100
 
-@set ClientThreadNum=4
+@set ClientThreadNum=1
 
 
 Client %IP% %port% %ClientNum% %ClientThreadNum%
-
-@pause

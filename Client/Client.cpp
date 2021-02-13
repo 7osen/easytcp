@@ -35,7 +35,7 @@ void sendThread(int id)
 		if (-1 != client->Connect(IP, port))
 		{
 			csock.emplace_back(client);
-			client->Send((char*)"2");
+			client->Send((char*)"1");
 			client->Start();
 		}
 	}
