@@ -35,8 +35,8 @@ void sendThread(int id)
 		if (-1 != client->Connect(IP, port))
 		{
 			csock.emplace_back(client);
-			client->Send((char*)"1");
-			client->Start();
+			client->sendNow((char*)"1");
+			//client->Start();
 		}
 	}
 	for (;;)
@@ -44,14 +44,14 @@ void sendThread(int id)
 		for (auto client: csock)
 		if (client != nullptr)
 		{ 
-			if (client->isRun()) client->Send((char*)"2");
+			if (client->isRun()) client->sendNow((char*)"2");
 			else
 			{
 				client = nullptr;
 			     	
 			}
 		}
-		Sleep(10);
+		Sleep(100);
 	}
 }
 char* get_argstr(int argc, char* args[], int i, char* def)

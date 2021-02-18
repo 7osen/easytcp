@@ -66,7 +66,8 @@ public:
 	{
 		_ID = id;
 		_sock = sock;
-
+		c_Sock_map.clear();
+		c_Sock.clear();
 	}
 
 	virtual ~CellServer()
@@ -79,7 +80,7 @@ public:
 		double t = _timeC.getSecond();
 		if (t >= 1.0)
 		{
-			printf("Server = %d,time <%lf>, <SOCKET = %d>, Client = <%d>, recieve  = <%d> message ...\n", _ID, t, _sock, (int)c_Sock.size(), _recvCount);
+			printf("Server = %d,time <%lf>, <SOCKET = %d>, Client = <%d>, map = <%d> recieve  = <%d> message ...\n", _ID, t, _sock, (int)c_Sock.size(), (int)c_Sock_map.size(),_recvCount);
 			_recvCount = 0;
 			_timeC.Update();
 		}
@@ -115,7 +116,7 @@ public:
 
 	int Recieve(SOCKET cSock)
 	{
-		char recvmsg[256] = {};
+		char recvmsg[1024] = {};
 		int nlen = recv(cSock, MsgBuf, MsgBufSize, 0);
 		int ret = -1;
 		if (nlen > 0)
@@ -193,11 +194,11 @@ public:
 
 	void addClient(SOCKET csock)
 	{
-		_m.lock();
+		
+		std::lock_guard<std::mutex> lock(_m);  
 		_ClientCount++;
 		c_Sock_map[csock] = new ClientInServer(csock);
-		c_SockBuf.push_back(c_Sock_map[csock]);
-		_m.unlock();
+		c_SockBuf.emplace_back(c_Sock_map[csock]);
 	}
 
 	void Start()

@@ -2,7 +2,7 @@
 #define _EasyTcpServer_hpp_
 #include "Cell.hpp"
 #include "CellSelect.hpp"
-
+#include "CellEpoll.hpp"
 class EasyTcpServer
 {
 private:

@@ -138,6 +138,19 @@ public:
 		_heart_time_mutex.unlock();
 	}
 
+	
+	void sendNow(char* msg)
+	{
+
+		//SendAndRecieveMessage::Send(_sock, msg);
+
+		DataBody data = DataBody(msg);
+		memcpy(_sendBuf + _sendBufLen, (char*)&data, sizeof(DataBody));
+		_sendBufLen += sizeof(DataBody);
+		send(_sock, _sendBuf, _sendBufLen, 0);
+		_sendBufLen = 0;
+	}
+
 	void Send(char* msg)
 	{
 		
